@@ -18,21 +18,27 @@ export class HomePage implements OnInit {
   }
 
   async createMap() {
+    console.log('createMap() is called'); // Log per controllare l'esecuzione della funzione
     const mapElement = document.getElementById('map');
 
     if (mapElement) {
+      console.log('Map element found'); // Verifica se l'elemento della mappa è stato trovato
       this.map = await GoogleMap.create({
-        id: 'my-map', // Identificatore univoco della mappa
-        element: mapElement, // Elemento HTML in cui verrà visualizzata la mappa
-        apiKey: 'AIzaSyCBIR0J-OcK2q_QxzsrzB73PlYucVopYz0', // Inserisci qui la tua chiave API
+        id: 'my-map',
+        element: mapElement,
+        apiKey: 'AIzaSyCBIR0J-OcK2q_QxzsrzB73PlYucVopYz0',
         config: {
           center: {
-            lat: 37.7749, // Coordinata di latitudine
-            lng: -122.4194, // Coordinata di longitudine
+            lat: 37.7749,
+            lng: -122.4194,
           },
           zoom: 8,
         },
       });
+      console.log('Map created successfully'); // Conferma che la mappa è stata creata
+    } else {
+      console.error('Map element not found'); // Messaggio di errore se l'elemento non viene trovato
     }
   }
+
 }
