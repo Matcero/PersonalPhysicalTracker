@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "722691294196",
+    "firebase_url": "https://personalphysicaltracker-cca30-default-rtdb.firebaseio.com",
+    "project_id": "personalphysicaltracker-cca30",
+    "storage_bucket": "personalphysicaltracker-cca30.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:722691294196:android:66df2d66d5f41adcddefa1",
+        "android_client_info": {
+          "package_name": "com.example.personalphysicaltracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBP5NZbhGgB00WATHnXa2_vtVOXZzxgw2I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
