@@ -11,7 +11,7 @@ cd LabMob
 ionic serve
 
 
-# Per far partire l'app web su anstroid
+# Per far partire l'app web su android
 npm install @capacitor/core @capacitor/cli
 
 ionic capacitor add android
