@@ -1,3 +1,5 @@
+<ion-app>
+  <div class="ion-page" id="main-content">
 <ion-header>
   <ion-toolbar>
     <ion-title>Calendario</ion-title>
@@ -18,3 +20,39 @@
     </ion-card>
   </div>
 </ion-content>
+    <!-- Barra di navigazione in basso -->
+    <ion-footer>
+      <ion-toolbar>
+        <ion-tabs>
+          <ion-tab-bar slot="bottom">
+
+            <!-- Home -->
+            <ion-tab-button (click)="goToHome()">
+              <ion-icon name="home-outline"></ion-icon>
+              <ion-label>Home</ion-label>
+            </ion-tab-button>
+
+            <!-- Statistic -->
+            <ion-tab-button>
+              <ion-icon name="stats-chart-outline"></ion-icon>
+              <ion-label>Statistiche</ion-label>
+            </ion-tab-button>
+
+            <!-- Calendar -->
+            <ion-tab-button (click)="goToCalendar()">
+              <ion-icon name="calendar-outline"></ion-icon>
+              <ion-label>Calendario</ion-label>
+            </ion-tab-button>
+
+            <!-- Community -->
+            <ion-tab-button>
+              <ion-icon name="people-outline"></ion-icon>
+              <ion-label>Community</ion-label>
+            </ion-tab-button>
+
+          </ion-tab-bar>
+        </ion-tabs>
+      </ion-toolbar>
+    </ion-footer>
+  </div>
+</ion-app>
