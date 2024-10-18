@@ -2,6 +2,7 @@
 import { Component, OnInit } from '@angular/core';
 import { GoogleMap } from '@capacitor/google-maps';
 import { ActivityService } from '../services/activity.service'; // Importa il service
+import { Router } from '@angular/router'; // Importa il Router
 
 @Component({
   selector: 'app-home',
@@ -11,7 +12,7 @@ import { ActivityService } from '../services/activity.service'; // Importa il se
 export class HomePage implements OnInit {
   map!: GoogleMap;
 
-  constructor(private activityService: ActivityService) {}
+  constructor(private activityService: ActivityService, private router: Router) {}
 
   async ngOnInit() {
     this.createMap();
@@ -44,4 +45,9 @@ export class HomePage implements OnInit {
   stopActivity() {
     this.activityService.stopActivity();
   }
+
+  // Funzione per andare alla home
+    goToHome() {
+      this.router.navigate(['/home']); // Naviga verso la home
+    }
 }
