@@ -1,6 +1,7 @@
 /// <reference types="@types/google.maps" />
 import { Component, OnInit } from '@angular/core';
 import { GoogleMap } from '@capacitor/google-maps';
+import { ActivityService } from '../services/activity.service'; // Importa il service
 
 @Component({
   selector: 'app-home',
@@ -8,21 +9,17 @@ import { GoogleMap } from '@capacitor/google-maps';
   styleUrls: ['./home.page.scss'],
 })
 export class HomePage implements OnInit {
-
   map!: GoogleMap;
 
-  constructor() {}
+  constructor(private activityService: ActivityService) {}
 
   async ngOnInit() {
     this.createMap();
   }
 
   async createMap() {
-    console.log('createMap() is called'); // Log per controllare l'esecuzione della funzione
     const mapElement = document.getElementById('map');
-
     if (mapElement) {
-      console.log('Map element found'); // Verifica se l'elemento della mappa è stato trovato
       this.map = await GoogleMap.create({
         id: 'my-map',
         element: mapElement,
@@ -35,10 +32,16 @@ export class HomePage implements OnInit {
           zoom: 8,
         },
       });
-      console.log('Map created successfully'); // Conferma che la mappa è stata creata
-    } else {
-      console.error('Map element not found'); // Messaggio di errore se l'elemento non viene trovato
     }
   }
 
+  // Avvia un'attività
+  startActivity(activityType: string) {
+    this.activityService.startActivity(activityType);
+  }
+
+  // Ferma l'attività
+  stopActivity() {
+    this.activityService.stopActivity();
+  }
 }

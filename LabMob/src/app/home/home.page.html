@@ -8,23 +8,45 @@
     <ion-content class="ion-padding">This is the menu content.</ion-content>
   </ion-menu>
   <div class="ion-page" id="main-content">
+    <ion-header [translucent]="true">
+      <ion-toolbar>
+        <ion-buttons slot="start">
+          <ion-menu-button></ion-menu-button>
+        </ion-buttons>
+        <ion-title>Home</ion-title>
+      </ion-toolbar>
+    </ion-header>
 
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-buttons slot="start">
-      <ion-menu-button></ion-menu-button>
-    </ion-buttons>
-    <ion-title>
-      Home
-    </ion-title>
-  </ion-toolbar>
-
-
-</ion-header>
+    <ion-content [fullscreen]="true">
 
 
-<ion-content [fullscreen]="true">
-  <div id="map" style="height: 50%; width: 50%;"></div>
-</ion-content>
+      <!-- Card per attività -->
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Attività</ion-card-title>
+        </ion-card-header>
+
+        <ion-card-content>
+          <!-- Pulsanti per attività -->
+          <ion-button expand="block" color="success" (click)="startActivity('walking')">
+            Inizia a camminare
+          </ion-button>
+
+          <ion-button expand="block" color="primary" (click)="startActivity('driving')">
+            Inizia a guidare
+          </ion-button>
+
+          <ion-button expand="block" color="warning" (click)="startActivity('sitting')">
+            Inizia a stare seduto
+          </ion-button>
+
+          <ion-button expand="block" color="danger" (click)="stopActivity()">
+            Ferma l'attività
+          </ion-button>
+        </ion-card-content>
+      </ion-card>
+      <!-- Mappa -->
+      <div id="map" style="height: 50%; width: 50%;"></div>
+    </ion-content>
   </div>
 </ion-app>
