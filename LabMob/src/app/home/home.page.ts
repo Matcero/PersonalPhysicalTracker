@@ -50,4 +50,10 @@ export class HomePage implements OnInit {
     goToHome() {
       this.router.navigate(['/home']); // Naviga verso la home
     }
+
+  // Add a method to navigate to the calendar
+  goToCalendar() {
+    this.router.navigate(['/calendar']);
+  }
+
 }
