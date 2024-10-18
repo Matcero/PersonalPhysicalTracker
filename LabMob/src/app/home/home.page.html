@@ -52,8 +52,8 @@
               <ion-label>Home</ion-label>
             </ion-tab-button>
 
-            <!-- Statistic -->
-            <ion-tab-button>
+            <!-- Statistiche -->
+            <ion-tab-button (click)="goToStatistics()">
               <ion-icon name="stats-chart-outline"></ion-icon>
               <ion-label>Statistiche</ion-label>
             </ion-tab-button>
@@ -65,7 +65,7 @@
             </ion-tab-button>
 
             <!-- Community -->
-            <ion-tab-button>
+            <ion-tab-button (click)="goToCommunity()">
               <ion-icon name="people-outline"></ion-icon>
               <ion-label>Community</ion-label>
             </ion-tab-button>

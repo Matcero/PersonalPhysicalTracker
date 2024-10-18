@@ -56,4 +56,14 @@ export class HomePage implements OnInit {
     this.router.navigate(['/calendar']);
   }
 
+  goToStatistics() {
+    this.router.navigate(['/statistics']);
+  }
+
+  // Metodo per navigare verso la pagina Community
+  goToCommunity() {
+    this.router.navigate(['/community']);
+  }
+
+
 }

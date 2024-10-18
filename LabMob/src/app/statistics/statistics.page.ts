@@ -2,16 +2,16 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router'; // Importa il Router
 
 @Component({
-  selector: 'app-calendar',
-  templateUrl: './calendar.page.html',
-  styleUrls: ['./calendar.page.scss'],
+  selector: 'app-statistics',
+  templateUrl: './statistics.page.html',
+  styleUrls: ['./statistics.page.scss'],
 })
-export class CalendarPage implements OnInit {
+export class StatisticsPage implements OnInit {
 
   constructor(private router: Router) { }
 
   ngOnInit() {
-    // Initialize any required data
+    // Inizializza eventuali dati statistici
   }
 
   // Funzione per andare alla home
