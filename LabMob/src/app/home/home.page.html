@@ -1,14 +1,30 @@
+<ion-app>
+  <ion-menu contentId="main-content">
+    <ion-header>
+      <ion-toolbar color="tertiary">
+        <ion-title>Menu Content</ion-title>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">This is the menu content.</ion-content>
+  </ion-menu>
+  <div class="ion-page" id="main-content">
+
 <ion-header [translucent]="true">
   <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
     <ion-title>
-      Mappa
+      Home
     </ion-title>
   </ion-toolbar>
+
+
 </ion-header>
 
 
 <ion-content [fullscreen]="true">
-  <div id="map" style="height: 100%; width: 100%;"></div>
+  <div id="map" style="height: 50%; width: 50%;"></div>
 </ion-content>
-
-
+  </div>
+</ion-app>
