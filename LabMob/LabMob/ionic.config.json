@@ -1,7 +1,0 @@
-{
-  "name": "LabMob",
-  "integrations": {
-    "capacitor": {}
-  },
-  "type": "angular"
-}
