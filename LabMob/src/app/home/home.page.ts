@@ -11,8 +11,11 @@ import { Router } from '@angular/router'; // Importa il Router
 })
 export class HomePage implements OnInit {
   map!: GoogleMap;
-  isActivityStarted: boolean = false; // Gestisce se un'attività è avviata o meno
-  currentActivity: any = null; // Dati dell'attività corrente
+  isActivityStarted: boolean = false;
+  currentActivity: any = null;
+  intervalId: any = null; // ID per il setInterval
+  elapsedTime: number = 0; // Tempo trascorso in secondi
+
 
   constructor(private activityService: ActivityService, private router: Router) {}
 
@@ -38,24 +41,52 @@ export class HomePage implements OnInit {
     }
   }
 
-  // Avvia un'attività
-    startActivity(activityType: string) {
-      this.isActivityStarted = true;
-      this.currentActivity = {
-        type: activityType,
-        distance: 0, // Km
-        calories: 0, // Kcal
-        time: new Date(), // Tempo di inizio
-      };
-      this.activityService.startActivity(activityType);
-    }
+   // Avvia un'attività
+     startActivity(activityType: string) {
+       this.isActivityStarted = true;
+       this.elapsedTime = 0; // Resetta il cronometro
 
-   // Ferma l'attività
-    stopActivity() {
-      this.isActivityStarted = false;
-      this.activityService.stopActivity();
-      this.currentActivity = null;
-    }
+       this.currentActivity = {
+         type: activityType,
+         distance: 0, // Km
+         calories: 0, // Kcal
+         startTime: new Date(), // Tempo di inizio
+       };
+
+       // Avvia il cronometro, aggiornato ogni secondo
+       this.intervalId = setInterval(() => {
+         this.elapsedTime++;
+       }, 1000);
+
+       this.activityService.startActivity(activityType);
+     }
+
+     // Ferma l'attività
+     stopActivity() {
+       this.isActivityStarted = false;
+
+       // Ferma il cronometro
+       if (this.intervalId) {
+         clearInterval(this.intervalId);
+         this.intervalId = null;
+       }
+
+       this.activityService.stopActivity();
+       this.currentActivity = null;
+     }
+
+     // Funzione per formattare il tempo trascorso in ore, minuti e secondi
+     formatTime(seconds: number) {
+       const hours = Math.floor(seconds / 3600); // Calcola le ore
+       const minutes = Math.floor((seconds % 3600) / 60); // Calcola i minuti
+       const remainingSeconds = seconds % 60; // Calcola i secondi rimanenti
+       return `${this.pad(hours)}:${this.pad(minutes)}:${this.pad(remainingSeconds)}`;
+     }
+
+     // Funzione per aggiungere uno zero iniziale se necessario
+     pad(value: number) {
+       return value < 10 ? '0' + value : value;
+     }
 
   // Funzione per andare alla home
     goToHome() {

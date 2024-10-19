@@ -18,8 +18,8 @@
         <ion-card-content>
           <p>Km: {{ currentActivity.distance }}</p>
           <p>Kcalorie: {{ currentActivity.calories }}</p>
-          <p>Tempo: {{ currentActivity.time | date:'shortTime' }}</p>
-          <p>Data: {{ currentActivity.time | date:'shortDate' }}</p>
+          <p>Tempo: {{ formatTime(elapsedTime) }}</p>
+          <p>Data: {{ currentActivity.startTime | date:'shortDate' }}</p>
         </ion-card-content>
       </ion-card>
 
@@ -83,4 +83,3 @@
     </ion-footer>
   </div>
 </ion-app>
-
