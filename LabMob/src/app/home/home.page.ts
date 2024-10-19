@@ -11,6 +11,8 @@ import { Router } from '@angular/router'; // Importa il Router
 })
 export class HomePage implements OnInit {
   map!: GoogleMap;
+  isActivityStarted: boolean = false; // Gestisce se un'attività è avviata o meno
+  currentActivity: any = null; // Dati dell'attività corrente
 
   constructor(private activityService: ActivityService, private router: Router) {}
 
@@ -37,14 +39,23 @@ export class HomePage implements OnInit {
   }
 
   // Avvia un'attività
-  startActivity(activityType: string) {
-    this.activityService.startActivity(activityType);
-  }
+    startActivity(activityType: string) {
+      this.isActivityStarted = true;
+      this.currentActivity = {
+        type: activityType,
+        distance: 0, // Km
+        calories: 0, // Kcal
+        time: new Date(), // Tempo di inizio
+      };
+      this.activityService.startActivity(activityType);
+    }
 
-  // Ferma l'attività
-  stopActivity() {
-    this.activityService.stopActivity();
-  }
+   // Ferma l'attività
+    stopActivity() {
+      this.isActivityStarted = false;
+      this.activityService.stopActivity();
+      this.currentActivity = null;
+    }
 
   // Funzione per andare alla home
     goToHome() {
