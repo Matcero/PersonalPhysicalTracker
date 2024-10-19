@@ -3,6 +3,8 @@ import { Component, OnInit } from '@angular/core';
 import { GoogleMap } from '@capacitor/google-maps';
 import { ActivityService } from '../services/activity.service'; // Importa il service
 import { Router } from '@angular/router'; // Importa il Router
+import { Geolocation } from '@capacitor/geolocation'; // Importa il plugin di geolocalizzazione
+import { Capacitor } from '@capacitor/core'; // Importa Capacitor per controllare la piattaforma
 
 @Component({
   selector: 'app-home',
@@ -39,28 +41,90 @@ export class HomePage implements OnInit {
     }
   }
 
-  // Avvia un'attività
-  startActivity(activityType: string) {
-    this.isActivityStarted = true;
-    this.elapsedTime = 0; // Resetta il cronometro
-    this.steps = 0; // Imposta i passi a 0 solo per "walking"
-    this.showBlinkingDot = true; // Attiva il lampeggio del punto
+ // Avvia un'attività e richiede la geolocalizzazione
+ async startActivity(activityType: string) {
+   if (Capacitor.getPlatform() === 'web') {
+     // Usa l'API Geolocation del browser
+     if ('geolocation' in navigator) {
+       navigator.geolocation.getCurrentPosition(
+         (position) => {
+           console.log('Posizione attuale dal browser:', position);
 
-    this.currentActivity = {
-      type: activityType,
-      distance: 0, // Km
-      calories: 0, // Kcal
-      startTime: new Date(), // Tempo di inizio
-    };
+           // Puoi avviare l'attività anche qui, utilizzando la posizione ottenuta dal browser
+           this.isActivityStarted = true;
+           this.elapsedTime = 0; // Resetta il cronometro
+           this.steps = 0; // Imposta i passi a 0 solo per "walking"
+           this.showBlinkingDot = true; // Attiva il lampeggio del punto
 
-    // Avvia il cronometro e alterna il lampeggio del punto
-    this.intervalId = setInterval(() => {
-      this.elapsedTime++;
-      this.showBlinkingDot = !this.showBlinkingDot; // Cambia la visibilità del punto ogni secondo
-    }, 1000);
+           this.currentActivity = {
+             type: activityType,
+             distance: 0, // Km
+             calories: 0, // Kcal
+             startTime: new Date(), // Tempo di inizio
+             startLocation: {
+               lat: position.coords.latitude,
+               lng: position.coords.longitude
+             }
+           };
 
-    this.activityService.startActivity(activityType);
-  }
+           this.intervalId = setInterval(() => {
+             this.elapsedTime++;
+             this.showBlinkingDot = !this.showBlinkingDot; // Cambia la visibilità del punto ogni secondo
+           }, 1000);
+
+           this.activityService.startActivity(activityType);
+         },
+         (error) => {
+           console.error('Errore nella geolocalizzazione del browser:', error);
+         }
+       );
+     } else {
+       console.log('Geolocalizzazione non supportata nel browser');
+     }
+     return;
+   }
+
+   try {
+     // Richiedi permesso di geolocalizzazione solo su piattaforma nativa
+     const permission = await Geolocation.requestPermissions();
+
+     if (permission.location === 'granted') {
+       // Ottieni la posizione attuale
+       const coordinates = await Geolocation.getCurrentPosition();
+
+       console.log('Posizione attuale:', coordinates);
+
+       // Inizia l'attività se i permessi sono concessi
+       this.isActivityStarted = true;
+       this.elapsedTime = 0; // Resetta il cronometro
+       this.steps = 0; // Imposta i passi a 0 solo per "walking"
+       this.showBlinkingDot = true; // Attiva il lampeggio del punto
+
+       this.currentActivity = {
+         type: activityType,
+         distance: 0, // Km
+         calories: 0, // Kcal
+         startTime: new Date(), // Tempo di inizio
+         startLocation: {
+           lat: coordinates.coords.latitude,
+           lng: coordinates.coords.longitude
+         }
+       };
+
+       this.intervalId = setInterval(() => {
+         this.elapsedTime++;
+         this.showBlinkingDot = !this.showBlinkingDot; // Cambia la visibilità del punto ogni secondo
+       }, 1000);
+
+       this.activityService.startActivity(activityType);
+     } else {
+       console.log('Permesso di geolocalizzazione negato');
+     }
+   } catch (error) {
+     console.error('Errore durante la richiesta dei permessi o l\'ottenimento della posizione:', error);
+   }
+ }
+
 
   // Ferma l'attività
   stopActivity() {
