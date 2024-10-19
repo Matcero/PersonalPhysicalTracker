@@ -18,8 +18,17 @@
         <ion-card-content>
           <p>Km: {{ currentActivity.distance }}</p>
           <p>Kcalorie: {{ currentActivity.calories }}</p>
-          <p>Tempo: {{ formatTime(elapsedTime) }}</p>
+
+          <!-- Mostra il cronometro con il punto lampeggiante -->
+          <p>
+            Tempo: {{ formatTime(elapsedTime) }}
+            <span *ngIf="showBlinkingDot" style="color: red;">•</span>
+          </p>
+
           <p>Data: {{ currentActivity.startTime | date:'shortDate' }}</p>
+
+          <!-- Mostra i passi solo se l'attività è "walking" -->
+          <p *ngIf="currentActivity.type === 'walking'">Passi: {{ steps }}</p>
         </ion-card-content>
       </ion-card>
 
@@ -87,4 +96,3 @@
     </ion-footer>
   </div>
 </ion-app>
-
