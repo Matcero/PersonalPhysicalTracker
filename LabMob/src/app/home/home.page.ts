@@ -5,6 +5,7 @@ import { ActivityService } from '../services/activity.service'; // Importa il se
 import { Router } from '@angular/router'; // Importa il Router
 import { Geolocation } from '@capacitor/geolocation'; // Importa il plugin di geolocalizzazione
 import { Capacitor } from '@capacitor/core'; // Importa Capacitor per controllare la piattaforma
+import { LocalNotifications } from '@capacitor/local-notifications'; // Importa il plugin per le notifiche locali
 
 @Component({
   selector: 'app-home',
@@ -41,93 +42,100 @@ export class HomePage implements OnInit {
     }
   }
 
- // Avvia un'attività e richiede la geolocalizzazione
- async startActivity(activityType: string) {
-   if (Capacitor.getPlatform() === 'web') {
-     // Usa l'API Geolocation del browser
-     if ('geolocation' in navigator) {
-       navigator.geolocation.getCurrentPosition(
-         (position) => {
-           console.log('Posizione attuale dal browser:', position);
+  // Funzione per controllare i permessi delle notifiche
+  async checkNotificationPermissions(): Promise<boolean> {
+    const permission = await LocalNotifications.requestPermissions();
+    return permission.display === 'granted';
+  }
 
-           // Puoi avviare l'attività anche qui, utilizzando la posizione ottenuta dal browser
-           this.isActivityStarted = true;
-           this.elapsedTime = 0; // Resetta il cronometro
-           this.steps = 0; // Imposta i passi a 0 solo per "walking"
-           this.showBlinkingDot = true; // Attiva il lampeggio del punto
+  // Avvia un'attività e richiede la geolocalizzazione
+  async startActivity(activityType: string) {
+    // Controlla se la piattaforma è Web
+    if (Capacitor.getPlatform() === 'web') {
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            console.log('Posizione attuale dal browser:', position);
+            this.startTracking(activityType, position.coords.latitude, position.coords.longitude);
+          },
+          (error) => {
+            console.error('Errore nella geolocalizzazione del browser:', error);
+          }
+        );
+      } else {
+        console.log('Geolocalizzazione non supportata nel browser');
+      }
+      return;
+    }
 
-           this.currentActivity = {
-             type: activityType,
-             distance: 0, // Km
-             calories: 0, // Kcal
-             startTime: new Date(), // Tempo di inizio
-             startLocation: {
-               lat: position.coords.latitude,
-               lng: position.coords.longitude
-             }
-           };
+    try {
+      // Richiedi i permessi per le notifiche locali
+      const notificationGranted = await this.checkNotificationPermissions();
+      if (!notificationGranted) {
+        console.error('Permessi per le notifiche non concessi.');
+        return;
+      }
 
-           this.intervalId = setInterval(() => {
-             this.elapsedTime++;
-             this.showBlinkingDot = !this.showBlinkingDot; // Cambia la visibilità del punto ogni secondo
-           }, 1000);
+      // Richiedi permesso di geolocalizzazione
+      const geoPermission = await Geolocation.requestPermissions();
+      if (geoPermission.location === 'granted') {
+        const coordinates = await Geolocation.getCurrentPosition();
+        console.log('Posizione attuale:', coordinates);
+        this.startTracking(activityType, coordinates.coords.latitude, coordinates.coords.longitude);
+      } else {
+        console.log('Permesso di geolocalizzazione negato');
+      }
+    } catch (error) {
+      console.error('Errore durante la richiesta dei permessi o l\'ottenimento della posizione:', error);
+    }
+  }
 
-           this.activityService.startActivity(activityType);
-         },
-         (error) => {
-           console.error('Errore nella geolocalizzazione del browser:', error);
-         }
-       );
-     } else {
-       console.log('Geolocalizzazione non supportata nel browser');
-     }
-     return;
-   }
+  // Funzione per avviare il tracking dell'attività
+  async startTracking(activityType: string, lat: number, lng: number) {
+    // Imposta lo stato dell'attività
+    this.isActivityStarted = true;
+    this.elapsedTime = 0; // Resetta il cronometro
+    this.steps = 0; // Imposta i passi a 0 solo per "walking"
+    this.showBlinkingDot = true; // Attiva il lampeggio del punto
 
-   try {
-     // Richiedi permesso di geolocalizzazione solo su piattaforma nativa
-     const permission = await Geolocation.requestPermissions();
+    // Salva i dati dell'attività corrente
+    this.currentActivity = {
+      type: activityType,
+      distance: 0, // Km
+      calories: 0, // Kcal
+      startTime: new Date(), // Tempo di inizio
+      startLocation: {
+        lat: lat,
+        lng: lng
+      }
+    };
 
-     if (permission.location === 'granted') {
-       // Ottieni la posizione attuale
-       const coordinates = await Geolocation.getCurrentPosition();
+    // Invia la notifica persistente
+    await LocalNotifications.schedule({
+      notifications: [
+        {
+          id: 1,
+          title: 'Attività in corso',
+          body: `L'attività di ${activityType} è in corso`,
+          ongoing: true, // Rende la notifica persistente
+          smallIcon: 'res://ic_stat_name',
+          iconColor: '#488AFF'
+        }
+      ]
+    });
 
-       console.log('Posizione attuale:', coordinates);
+    // Imposta un intervallo per aggiornare il tempo trascorso e il punto lampeggiante
+    this.intervalId = setInterval(() => {
+      this.elapsedTime++;
+      this.showBlinkingDot = !this.showBlinkingDot; // Cambia la visibilità del punto ogni secondo
+    }, 1000);
 
-       // Inizia l'attività se i permessi sono concessi
-       this.isActivityStarted = true;
-       this.elapsedTime = 0; // Resetta il cronometro
-       this.steps = 0; // Imposta i passi a 0 solo per "walking"
-       this.showBlinkingDot = true; // Attiva il lampeggio del punto
-
-       this.currentActivity = {
-         type: activityType,
-         distance: 0, // Km
-         calories: 0, // Kcal
-         startTime: new Date(), // Tempo di inizio
-         startLocation: {
-           lat: coordinates.coords.latitude,
-           lng: coordinates.coords.longitude
-         }
-       };
-
-       this.intervalId = setInterval(() => {
-         this.elapsedTime++;
-         this.showBlinkingDot = !this.showBlinkingDot; // Cambia la visibilità del punto ogni secondo
-       }, 1000);
-
-       this.activityService.startActivity(activityType);
-     } else {
-       console.log('Permesso di geolocalizzazione negato');
-     }
-   } catch (error) {
-     console.error('Errore durante la richiesta dei permessi o l\'ottenimento della posizione:', error);
-   }
- }
-
+    // Avvia l'attività nel service
+    this.activityService.startActivity(activityType);
+  }
 
   // Ferma l'attività
-  stopActivity() {
+  async stopActivity() {
     this.isActivityStarted = false;
 
     // Ferma il cronometro
@@ -139,6 +147,9 @@ export class HomePage implements OnInit {
     this.showBlinkingDot = false; // Ferma il lampeggio del punto
     this.activityService.stopActivity();
     this.currentActivity = null;
+
+    // Cancella la notifica persistente
+    await LocalNotifications.cancel({ notifications: [{ id: 1 }] });
   }
 
   // Funzione per formattare il tempo trascorso in ore, minuti e secondi
