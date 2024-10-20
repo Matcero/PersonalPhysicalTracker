@@ -6,6 +6,7 @@ import { Router } from '@angular/router'; // Importa il Router
 import { Geolocation } from '@capacitor/geolocation'; // Importa il plugin di geolocalizzazione
 import { Capacitor } from '@capacitor/core'; // Importa Capacitor per controllare la piattaforma
 import { LocalNotifications } from '@capacitor/local-notifications'; // Importa il plugin per le notifiche locali
+import { Platform } from '@ionic/angular'; // Verifica se sei su Android
 
 @Component({
   selector: 'app-home',
@@ -21,10 +22,42 @@ export class HomePage implements OnInit {
   steps: number = 0; // Numero di passi
   showBlinkingDot: boolean = false; // Controlla la visibilità del punto lampeggiante
 
-  constructor(private activityService: ActivityService, private router: Router) {}
+  constructor(private activityService: ActivityService, private router: Router, private platform: Platform) {}
 
   async ngOnInit() {
     this.createMap();
+    this.platform.pause.subscribe(() => this.onAppBackground()); // Gestisce l'evento di background
+    this.platform.resume.subscribe(() => this.onAppForeground()); // Gestisce l'evento di foreground
+
+    // Gestisci il click sulla notifica
+    LocalNotifications.addListener('localNotificationActionPerformed', (notification) => {
+      console.log('Notifica cliccata:', notification);
+      if (notification.notification.id === 1) {
+        this.router.navigate(['/home']);
+      }
+    });
+  }
+
+  // Funzione per gestire quando l'app va in background
+  async onAppBackground() {
+    if (this.isActivityStarted && this.currentActivity) {
+      await LocalNotifications.schedule({
+        notifications: [
+          {
+            id: 1,
+            title: 'Attività in corso',
+            body: `L'attività di ${this.currentActivity.type} è in corso - Tempo: ${this.formatTime(this.elapsedTime)}`,
+            ongoing: true,
+            autoCancel: false,
+          },
+        ],
+      });
+    }
+  }
+
+  // Funzione per gestire quando l'app ritorna in primo piano
+  async onAppForeground() {
+    await LocalNotifications.cancel({ notifications: [{ id: 1 }] });
   }
 
   async createMap() {
@@ -48,49 +81,13 @@ export class HomePage implements OnInit {
     return permission.display === 'granted';
   }
 
-  // Funzione per controllare i permessi delle notifiche web
-  async checkWebNotificationPermissions(): Promise<boolean> {
-    if (!('Notification' in window)) {
-      console.error('Le notifiche non sono supportate dal browser.');
-      return false;
-    }
-
-    if (Notification.permission === 'granted') {
-      return true;
-    }
-
-    if (Notification.permission === 'denied') {
-      console.error('Permessi per le notifiche web negati.');
-      return false;
-    }
-
-    // Richiedi il permesso per le notifiche
-    const permission = await Notification.requestPermission();
-    return permission === 'granted';
-  }
-
-  // Funzione per mostrare una notifica web
-  showWebNotification(title: string, body: string) {
-    if (Notification.permission === 'granted') {
-      new Notification(title, { body });
-    }
-  }
-
   // Avvia un'attività e richiede la geolocalizzazione
   async startActivity(activityType: string) {
-    // Controlla se la piattaforma è Web
     if (Capacitor.getPlatform() === 'web') {
       if ('geolocation' in navigator) {
         navigator.geolocation.getCurrentPosition(
           async (position) => {
             console.log('Posizione attuale dal browser:', position);
-
-            // Controlla i permessi per le notifiche web
-            const notificationGranted = await this.checkWebNotificationPermissions();
-            if (notificationGranted) {
-              this.showWebNotification('Attività in corso', `L'attività di ${activityType} è in corso`);
-            }
-
             this.startTracking(activityType, position.coords.latitude, position.coords.longitude);
           },
           (error) => {
@@ -126,24 +123,29 @@ export class HomePage implements OnInit {
   }
 
   // Funzione per avviare il tracking dell'attività
+  // Funzione per avviare il tracking dell'attività
   async startTracking(activityType: string, lat: number, lng: number) {
-    // Imposta lo stato dell'attività
     this.isActivityStarted = true;
-    this.elapsedTime = 0; // Resetta il cronometro
-    this.steps = 0; // Imposta i passi a 0 solo per "walking"
-    this.showBlinkingDot = true; // Attiva il lampeggio del punto
+    this.elapsedTime = 0;
+    this.steps = 0;
+    this.showBlinkingDot = true;
 
-    // Salva i dati dell'attività corrente
     this.currentActivity = {
       type: activityType,
-      distance: 0, // Km
-      calories: 0, // Kcal
-      startTime: new Date(), // Tempo di inizio
+      distance: 0,
+      calories: 0,
+      startTime: new Date(),
       startLocation: {
         lat: lat,
-        lng: lng
-      }
+        lng: lng,
+      },
     };
+
+    // Avvia il conteggio del tempo e il punto lampeggiante (mantieni una sola chiamata a setInterval)
+    this.intervalId = setInterval(() => {
+      this.elapsedTime++;
+      this.showBlinkingDot = !this.showBlinkingDot;
+    }, 1000);
 
     // Invia la notifica persistente
     await LocalNotifications.schedule({
@@ -152,34 +154,29 @@ export class HomePage implements OnInit {
           id: 1,
           title: 'Attività in corso',
           body: `L'attività di ${activityType} è in corso`,
-          ongoing: true, // Rende la notifica persistente
+          ongoing: true, // Impedisce la cancellazione automatica
+          autoCancel: false, // Evita la cancellazione automatica al clic
           smallIcon: 'res://ic_stat_name',
-          iconColor: '#488AFF'
-        }
-      ]
+          iconColor: '#488AFF',
+        },
+      ],
     });
 
-    // Imposta un intervallo per aggiornare il tempo trascorso e il punto lampeggiante
-    this.intervalId = setInterval(() => {
-      this.elapsedTime++;
-      this.showBlinkingDot = !this.showBlinkingDot; // Cambia la visibilità del punto ogni secondo
-    }, 1000);
-
-    // Avvia l'attività nel service
+    // Avvia l'attività nel servizio
     this.activityService.startActivity(activityType);
   }
+
 
   // Ferma l'attività
   async stopActivity() {
     this.isActivityStarted = false;
 
-    // Ferma il cronometro
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
 
-    this.showBlinkingDot = false; // Ferma il lampeggio del punto
+    this.showBlinkingDot = false;
     this.activityService.stopActivity();
     this.currentActivity = null;
 
@@ -187,22 +184,19 @@ export class HomePage implements OnInit {
     await LocalNotifications.cancel({ notifications: [{ id: 1 }] });
   }
 
-  // Funzione per formattare il tempo trascorso in ore, minuti e secondi
   formatTime(seconds: number) {
-    const hours = Math.floor(seconds / 3600); // Calcola le ore
-    const minutes = Math.floor((seconds % 3600) / 60); // Calcola i minuti
-    const remainingSeconds = seconds % 60; // Calcola i secondi rimanenti
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
     return `${this.pad(hours)}:${this.pad(minutes)}:${this.pad(remainingSeconds)}`;
   }
 
-  // Funzione per aggiungere uno zero iniziale se necessario
   pad(value: number) {
     return value < 10 ? '0' + value : value;
   }
 
-  // Funzione per andare alla home
   goToHome() {
-    this.router.navigate(['/home']); // Naviga verso la home
+    this.router.navigate(['/home']);
   }
 
   goToCalendar() {
