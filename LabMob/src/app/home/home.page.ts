@@ -48,6 +48,34 @@ export class HomePage implements OnInit {
     return permission.display === 'granted';
   }
 
+  // Funzione per controllare i permessi delle notifiche web
+  async checkWebNotificationPermissions(): Promise<boolean> {
+    if (!('Notification' in window)) {
+      console.error('Le notifiche non sono supportate dal browser.');
+      return false;
+    }
+
+    if (Notification.permission === 'granted') {
+      return true;
+    }
+
+    if (Notification.permission === 'denied') {
+      console.error('Permessi per le notifiche web negati.');
+      return false;
+    }
+
+    // Richiedi il permesso per le notifiche
+    const permission = await Notification.requestPermission();
+    return permission === 'granted';
+  }
+
+  // Funzione per mostrare una notifica web
+  showWebNotification(title: string, body: string) {
+    if (Notification.permission === 'granted') {
+      new Notification(title, { body });
+    }
+  }
+
   // Avvia un'attività e richiede la geolocalizzazione
   async startActivity(activityType: string) {
     // Controlla se la piattaforma è Web
@@ -56,6 +84,13 @@ export class HomePage implements OnInit {
         navigator.geolocation.getCurrentPosition(
           async (position) => {
             console.log('Posizione attuale dal browser:', position);
+
+            // Controlla i permessi per le notifiche web
+            const notificationGranted = await this.checkWebNotificationPermissions();
+            if (notificationGranted) {
+              this.showWebNotification('Attività in corso', `L'attività di ${activityType} è in corso`);
+            }
+
             this.startTracking(activityType, position.coords.latitude, position.coords.longitude);
           },
           (error) => {
