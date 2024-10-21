@@ -130,6 +130,7 @@ export class HomePage implements OnInit {
 
   // Funzione per avviare il tracking dell'attività
   async startTracking(activityType: string, lat: number, lng: number) {
+    console.log("Avvio attività:", activityType); // Log per avvio attività
     this.isActivityStarted = true;
     this.elapsedTime = 0;
     this.steps = 0;
@@ -148,9 +149,9 @@ export class HomePage implements OnInit {
 
     // Avvia il conteggio del tempo e il punto lampeggiante (mantieni una sola chiamata a setInterval)
     this.intervalId = setInterval(() => {
-      this.elapsedTime++;
-      this.showBlinkingDot = !this.showBlinkingDot;
-    }, 1000);
+            this.elapsedTime = Math.floor((Date.now() - this.currentActivity.startTime.getTime()) / 1000); // Calcola il tempo trascorso in secondi
+            this.showBlinkingDot = !this.showBlinkingDot;
+        }, 1000);
 
     // Invia la notifica persistente
     await LocalNotifications.schedule({
@@ -161,8 +162,8 @@ export class HomePage implements OnInit {
           body: `L'attività di ${activityType} è in corso`,
           ongoing: true, // Impedisce la cancellazione automatica
           autoCancel: false, // Evita la cancellazione automatica al clic
-          smallIcon: 'res://ic_stat_name',
-          iconColor: '#488AFF',
+          //smallIcon: 'res://ic_stat_name',
+          //iconColor: '#488AFF',
         },
       ],
     });

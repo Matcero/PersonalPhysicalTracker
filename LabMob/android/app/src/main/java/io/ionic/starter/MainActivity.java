@@ -13,9 +13,10 @@ public class MainActivity extends BridgeActivity {
     // Altri codici
 
     // Registrazione del plugin
-    this.initPlugin(BackgroundRunnerPlugin.class);
+    registerPlugin(BackgroundRunnerPlugin.class);
   }
 
   private void initPlugin(Class<BackgroundRunnerPlugin> backgroundRunnerPluginClass) {
+
   }
 }
