@@ -1,13 +1,15 @@
-/// <reference types="@types/google.maps" />
+/// <reference types="@types/google.maps" />7
 import { Component, OnInit } from '@angular/core';
 import { GoogleMap } from '@capacitor/google-maps';
-import { ActivityService } from '../services/activity.service'; // Importa il service
-import { Router } from '@angular/router'; // Importa il Router
-import { Geolocation } from '@capacitor/geolocation'; // Importa il plugin di geolocalizzazione
-import { Capacitor } from '@capacitor/core'; // Importa Capacitor per controllare la piattaforma
-import { LocalNotifications } from '@capacitor/local-notifications'; // Importa il plugin per le notifiche locali
-import { Platform } from '@ionic/angular'; // Verifica se sei su Android
+import { ActivityService } from '../services/activity.service';
+import { Router } from '@angular/router';
+import { Geolocation } from '@capacitor/geolocation';
+import { Capacitor } from '@capacitor/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
+import { Platform } from '@ionic/angular';
 import { Plugins } from '@capacitor/core';
+import { Motion } from '@capacitor/motion';
+
 const { App } = Plugins;
 
 @Component({
@@ -19,19 +21,23 @@ export class HomePage implements OnInit {
   map!: GoogleMap;
   isActivityStarted: boolean = false;
   currentActivity: any = null;
-  intervalId: any = null; // ID per il setInterval
-  elapsedTime: number = 0; // Tempo trascorso in secondi
-  steps: number = 0; // Numero di passi
-  showBlinkingDot: boolean = false; // Controlla la visibilità del punto lampeggiante
+  intervalId: any = null;
+  elapsedTime: number = 0;
+  showBlinkingDot: boolean = false;
+  steps: number = 0;
+lastAcceleration: { x: number, y: number, z: number } | null = { x: 0, y: 0, z: 0 };
+  distance: number = 0; // Distance in kilometers
+  calories: number = 0; // Calories burned
+  stepLength: number = 0.00078; // Average step length in kilometers (approx. 0.78 meters)
+  weight: number = 70; // User's weight in kg (adjust this value)
 
   constructor(private activityService: ActivityService, private router: Router, private platform: Platform) {}
 
   async ngOnInit() {
     this.createMap();
-    this.platform.pause.subscribe(() => this.onAppBackground()); // Gestisce l'evento di background
-    this.platform.resume.subscribe(() => this.onAppForeground()); // Gestisce l'evento di foreground
+    this.platform.pause.subscribe(() => this.onAppBackground());
+    this.platform.resume.subscribe(() => this.onAppForeground());
 
-    // Gestisci il click sulla notifica
     LocalNotifications.addListener('localNotificationActionPerformed', (notification) => {
       console.log('Notifica cliccata:', notification);
       if (notification.notification.id === 1) {
@@ -39,7 +45,6 @@ export class HomePage implements OnInit {
       }
     });
   }
-
   // Funzione per gestire quando l'app va in background
   async onAppBackground() {
     if (this.isActivityStarted && this.currentActivity) {
@@ -88,6 +93,9 @@ export class HomePage implements OnInit {
 
   // Avvia un'attività e richiede la geolocalizzazione
   async startActivity(activityType: string) {
+    this.steps = 0;
+        this.distance = 0;
+        this.calories = 0;
     console.log("Avvio attività:", activityType); // Log per avvio attività
     if (Capacitor.getPlatform() === 'web') {
       if ('geolocation' in navigator) {
@@ -129,29 +137,32 @@ export class HomePage implements OnInit {
   }
 
   // Funzione per avviare il tracking dell'attività
-  async startTracking(activityType: string, lat: number, lng: number) {
-    console.log("Avvio attività:", activityType); // Log per avvio attività
-    this.isActivityStarted = true;
-    this.elapsedTime = 0;
-    this.steps = 0;
-    this.showBlinkingDot = true;
+ async startTracking(activityType: string, lat: number, lng: number) {
+     this.isActivityStarted = true;
+     this.elapsedTime = 0;
+     this.showBlinkingDot = true;
 
-    this.currentActivity = {
-      type: activityType,
-      distance: 0,
-      calories: 0,
-      startTime: new Date(),
-      startLocation: {
-        lat: lat,
-        lng: lng,
-      },
-    };
+     this.currentActivity = {
+       type: activityType,
+       distance: 0,
+       calories: 0,
+       startTime: new Date(),
+       startLocation: {
+         lat: lat,
+         lng: lng,
+       },
+     };
+
+     this.startStepCounting();
 
     // Avvia il conteggio del tempo e il punto lampeggiante (mantieni una sola chiamata a setInterval)
     this.intervalId = setInterval(() => {
-            this.elapsedTime = Math.floor((Date.now() - this.currentActivity.startTime.getTime()) / 1000); // Calcola il tempo trascorso in secondi
-            this.showBlinkingDot = !this.showBlinkingDot;
-        }, 1000);
+        this.elapsedTime = Math.floor((Date.now() - this.currentActivity.startTime.getTime()) / 1000); // Calcola il tempo trascorso in secondi
+        this.showBlinkingDot = !this.showBlinkingDot;
+        // Update activity data (distance and calories) every second
+        this.updateActivityData();
+    }, 1000);
+
 
     // Invia la notifica persistente
     await LocalNotifications.schedule({
@@ -187,6 +198,9 @@ export class HomePage implements OnInit {
     this.activityService.stopActivity();
     this.currentActivity = null;
 
+  // Stop step counting
+  this.stopStepCounting();
+
     // Cancella la notifica persistente
     await LocalNotifications.cancel({ notifications: [{ id: 1 }] });
   }
@@ -196,6 +210,34 @@ export class HomePage implements OnInit {
     const minutes = Math.floor((seconds % 3600) / 60);
     const remainingSeconds = seconds % 60;
     return `${this.pad(hours)}:${this.pad(minutes)}:${this.pad(remainingSeconds)}`;
+  }
+startStepCounting() {
+    Motion.addListener('accel', (event: any) => {
+      const acceleration = event.accelerationIncludingGravity;
+      if (this.lastAcceleration) {
+        const deltaX = acceleration.x - this.lastAcceleration.x;
+        const deltaY = acceleration.y - this.lastAcceleration.y;
+        const deltaZ = acceleration.z - this.lastAcceleration.z;
+        const delta = Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
+        if (delta > 1.5) { // Step detection threshold
+          this.steps++;
+          this.distance = this.steps * this.stepLength; // Update distance based on steps
+        }
+      }
+      this.lastAcceleration = acceleration;
+    });
+  }
+
+ stopStepCounting() {
+    Motion.removeAllListeners();
+  }
+
+
+  // Update distance and calories every second
+  updateActivityData() {
+    // Assume 0.05 kcal burned per step as an approximation
+    this.calories = this.steps * 0.05 * this.weight / 70; // Calorie calculation based on user weight
+    console.log(`Steps: ${this.steps}, Distance: ${this.distance.toFixed(2)} km, Calories: ${this.calories.toFixed(2)} kcal`);
   }
 
   pad(value: number) {
