@@ -7,6 +7,8 @@ import { Geolocation } from '@capacitor/geolocation'; // Importa il plugin di ge
 import { Capacitor } from '@capacitor/core'; // Importa Capacitor per controllare la piattaforma
 import { LocalNotifications } from '@capacitor/local-notifications'; // Importa il plugin per le notifiche locali
 import { Platform } from '@ionic/angular'; // Verifica se sei su Android
+import { Plugins } from '@capacitor/core';
+const { App } = Plugins;
 
 @Component({
   selector: 'app-home',
@@ -52,12 +54,14 @@ export class HomePage implements OnInit {
           },
         ],
       });
+      console.log("App in background: notifica programmata."); // Log per app in background
     }
   }
 
   // Funzione per gestire quando l'app ritorna in primo piano
   async onAppForeground() {
     await LocalNotifications.cancel({ notifications: [{ id: 1 }] });
+    console.log("App in primo piano: notifica cancellata."); // Log per app in primo piano
   }
 
   async createMap() {
@@ -72,6 +76,7 @@ export class HomePage implements OnInit {
           zoom: 8,
         },
       });
+      console.log("Mappa creata."); // Log per mappa creata
     }
   }
 
@@ -83,6 +88,7 @@ export class HomePage implements OnInit {
 
   // Avvia un'attività e richiede la geolocalizzazione
   async startActivity(activityType: string) {
+    console.log("Avvio attività:", activityType); // Log per avvio attività
     if (Capacitor.getPlatform() === 'web') {
       if ('geolocation' in navigator) {
         navigator.geolocation.getCurrentPosition(
@@ -123,7 +129,6 @@ export class HomePage implements OnInit {
   }
 
   // Funzione per avviare il tracking dell'attività
-  // Funzione per avviare il tracking dell'attività
   async startTracking(activityType: string, lat: number, lng: number) {
     this.isActivityStarted = true;
     this.elapsedTime = 0;
@@ -161,14 +166,15 @@ export class HomePage implements OnInit {
         },
       ],
     });
+    console.log("Notifica persistente inviata."); // Log per notifica inviata
 
     // Avvia l'attività nel servizio
     this.activityService.startActivity(activityType);
   }
 
-
   // Ferma l'attività
   async stopActivity() {
+    console.log("Fermando attività"); // Log per fermo attività
     this.isActivityStarted = false;
 
     if (this.intervalId) {

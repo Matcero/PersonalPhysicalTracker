@@ -36,6 +36,7 @@
       <meta-data android:name="com.google.android.geo.API_KEY" android:value="AIzaSyCBIR0J-OcK2q_QxzsrzB73PlYucVopYz0"/>
       <service
         android:name=".ForegroundService"
+        android:foregroundServiceType="location|dataSync"
         android:enabled="true"
         android:exported="false" />
     </application>
@@ -52,7 +53,8 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.VIBRATE"/>
-
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
 
 </manifest>
