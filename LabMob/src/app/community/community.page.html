@@ -6,21 +6,21 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
-  <!-- Sezione per la community -->
-  <div>
-    <ion-card>
-      <ion-card-header>
-        <ion-card-title>Interazione con la Community</ion-card-title>
-      </ion-card-header>
-      <ion-card-content>
-        <!-- Qui puoi visualizzare informazioni o feed dalla community -->
-        <p>Benvenuto nella sezione Community!</p>
-        <!-- Potresti aggiungere una lista degli utenti, aggiornamenti, o feed -->
-      </ion-card-content>
-    </ion-card>
-  </div>
-</ion-content>
+    <ion-content>
+      <div>
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>Interazione con la Community</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <p>Benvenuto nella sezione Community!</p>
+            <!-- Bottone per il login con Google -->
+            <ion-button (click)="loginWithGoogle()">Login con Google</ion-button>
+          </ion-card-content>
+        </ion-card>
+      </div>
+    </ion-content>
+
     <!-- Barra di navigazione in basso -->
     <ion-footer>
       <ion-toolbar>

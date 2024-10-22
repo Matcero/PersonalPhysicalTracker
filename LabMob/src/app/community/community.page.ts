@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router'; // Importa il Router
+import { AngularFireAuth } from '@angular/fire/compat/auth'; // Modifica l'importazione
+import { GoogleAuthProvider } from 'firebase/auth'; // Mantieni questo
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-community',
@@ -8,30 +10,36 @@ import { Router } from '@angular/router'; // Importa il Router
 })
 export class CommunityPage implements OnInit {
 
-  constructor(private router: Router) { }
+  constructor(private afAuth: AngularFireAuth, private router: Router) { }
 
-  ngOnInit() {
-    // Inizializza eventuali dati della community
+  ngOnInit() {}
+
+  // Funzione per effettuare il login con Google
+  async loginWithGoogle() {
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await this.afAuth.signInWithPopup(provider);
+      console.log('Login riuscito:', result.user);
+      // Dopo il login, puoi navigare ad una pagina protetta, per esempio la home
+      this.router.navigate(['/home']);
+    } catch (error) {
+      console.error('Errore durante il login:', error);
+    }
   }
 
-  // Funzione per andare alla home
-      goToHome() {
-        this.router.navigate(['/home']); // Naviga verso la home
-      }
+  goToHome() {
+    this.router.navigate(['/home']);
+  }
 
-    // Add a method to navigate to the calendar
-    goToCalendar() {
-      this.router.navigate(['/calendar']);
-    }
+  goToCalendar() {
+    this.router.navigate(['/calendar']);
+  }
 
-    goToStatistics() {
-      this.router.navigate(['/statistics']);
-    }
+  goToStatistics() {
+    this.router.navigate(['/statistics']);
+  }
 
-    // Metodo per navigare verso la pagina Community
-    goToCommunity() {
-      this.router.navigate(['/community']);
-    }
-
-
+  goToCommunity() {
+    this.router.navigate(['/community']);
+  }
 }
