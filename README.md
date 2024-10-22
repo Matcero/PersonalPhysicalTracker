@@ -15,11 +15,8 @@ npm install @capacitor/motion
 npm install @capacitor/local-notifications
 
 ionic capacitor add android
-
-ionic build
-
-ionic capacitor sync
-
 ionic serve
 
+ionic build
+ionic capacitor sync
 ionic capacitor open android
