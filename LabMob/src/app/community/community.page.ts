@@ -20,6 +20,9 @@ export class CommunityPage implements OnInit {
       if (user) {
         this.user = user;  // Memorizza l'utente loggato
         this.loginMessage = 'Login effettuato!';  // Aggiorna il messaggio di login
+      } else {
+        this.user = null;
+        this.loginMessage = 'Benvenuto nella sezione Community!'; // Messaggio predefinito se non loggato
       }
     });
   }
@@ -35,6 +38,19 @@ export class CommunityPage implements OnInit {
       this.router.navigate(['/home']);  // Naviga alla home
     } catch (error) {
       console.error('Errore durante il login:', error);
+    }
+  }
+
+  // Funzione per effettuare il logout
+  async logout() {
+    try {
+      await this.afAuth.signOut();
+      this.user = null;  // Resetta l'utente loggato
+      console.log('Logout effettuato');
+      this.loginMessage = 'Benvenuto nella sezione Community!'; // Aggiorna il messaggio dopo il logout
+      this.router.navigate(['/community']); // Resta nella pagina Community
+    } catch (error) {
+      console.error('Errore durante il logout:', error);
     }
   }
 

@@ -17,6 +17,9 @@
 
             <!-- Bottone per il login con Google, visibile solo se l'utente non è loggato -->
             <ion-button *ngIf="!user" (click)="loginWithGoogle()">Login con Google</ion-button>
+
+            <!-- Bottone per il logout, visibile solo se l'utente è loggato -->
+            <ion-button *ngIf="user" (click)="logout()">Logout</ion-button>
           </ion-card-content>
         </ion-card>
       </div>
