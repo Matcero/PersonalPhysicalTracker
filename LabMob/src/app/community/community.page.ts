@@ -9,19 +9,30 @@ import { Router } from '@angular/router';
   styleUrls: ['./community.page.scss'],
 })
 export class CommunityPage implements OnInit {
+  user: any = null;  // Variabile per tenere traccia dell'utente loggato
+  loginMessage: string = 'Benvenuto nella sezione Community!';
 
-  constructor(private afAuth: AngularFireAuth, private router: Router) { }
+  constructor(private afAuth: AngularFireAuth, private router: Router) {}
 
-  ngOnInit() {}
+  ngOnInit() {
+    // Ascolta lo stato di autenticazione dell'utente
+    this.afAuth.authState.subscribe(user => {
+      if (user) {
+        this.user = user;  // Memorizza l'utente loggato
+        this.loginMessage = 'Login effettuato!';  // Aggiorna il messaggio di login
+      }
+    });
+  }
 
   // Funzione per effettuare il login con Google
   async loginWithGoogle() {
     const provider = new GoogleAuthProvider();
     try {
       const result = await this.afAuth.signInWithPopup(provider);
-      console.log('Login riuscito:', result.user);
-      // Dopo il login, puoi navigare ad una pagina protetta, per esempio la home
-      this.router.navigate(['/home']);
+      this.user = result.user;  // Memorizza l'utente
+      console.log('Login riuscito:', this.user);
+      this.loginMessage = 'Login effettuato!';  // Aggiorna il messaggio
+      this.router.navigate(['/home']);  // Naviga alla home
     } catch (error) {
       console.error('Errore durante il login:', error);
     }

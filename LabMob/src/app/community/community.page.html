@@ -1,10 +1,10 @@
 <ion-app>
   <div class="ion-page" id="main-content">
-  <ion-header>
-  <ion-toolbar>
-    <ion-title>Community</ion-title>
-  </ion-toolbar>
-</ion-header>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>Community</ion-title>
+      </ion-toolbar>
+    </ion-header>
 
     <ion-content>
       <div>
@@ -13,9 +13,10 @@
             <ion-card-title>Interazione con la Community</ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            <p>Benvenuto nella sezione Community!</p>
-            <!-- Bottone per il login con Google -->
-            <ion-button (click)="loginWithGoogle()">Login con Google</ion-button>
+            <p>{{ loginMessage }}</p>  <!-- Mostra il messaggio di login -->
+
+            <!-- Bottone per il login con Google, visibile solo se l'utente non è loggato -->
+            <ion-button *ngIf="!user" (click)="loginWithGoogle()">Login con Google</ion-button>
           </ion-card-content>
         </ion-card>
       </div>
@@ -57,4 +58,3 @@
     </ion-footer>
   </div>
 </ion-app>
-
