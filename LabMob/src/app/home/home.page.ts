@@ -9,6 +9,8 @@ import { LocalNotifications } from '@capacitor/local-notifications';
 import { Platform } from '@ionic/angular';
 import { Plugins } from '@capacitor/core';
 import { Motion } from '@capacitor/motion';
+import { AngularFirestore } from '@angular/fire/compat/firestore';
+
 
 const { App } = Plugins;
 
@@ -18,6 +20,8 @@ const { App } = Plugins;
   styleUrls: ['./home.page.scss'],
 })
 export class HomePage implements OnInit {
+  //items: any[] = [];
+
   map!: GoogleMap;
   isActivityStarted: boolean = false;
   currentActivity: any = null;
@@ -31,7 +35,24 @@ lastAcceleration: { x: number, y: number, z: number } | null = { x: 0, y: 0, z: 
   stepLength: number = 0.00078; // Average step length in kilometers (approx. 0.78 meters)
   weight: number = 70; // User's weight in kg (adjust this value)
 
-  constructor(private activityService: ActivityService, private router: Router, private platform: Platform) {}
+  constructor(private activityService: ActivityService, private router: Router, private platform: Platform, private firestore: AngularFirestore) {}
+
+   // Esempio di funzione per aggiungere dati
+    addItem() {
+      const item = { name: 'Sample Item', created: new Date() };
+      this.firestore.collection('items').add(item).then(() => {
+        console.log('Item aggiunto con successo!');
+      });
+    }
+
+    // Esempio di funzione per leggere dati
+    getItems() {
+      this.firestore.collection('items').snapshotChanges().subscribe(data => {
+        data.forEach(item => {
+          console.log(item.payload.doc.data());
+        });
+      });
+    }
 
   async ngOnInit() {
     this.createMap();

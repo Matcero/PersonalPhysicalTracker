@@ -10,6 +10,17 @@
     </ion-header>
 
     <ion-content [fullscreen]="true">
+
+      <!--<ion-button (click)="addItem()">Aggiungi un oggetto a Firestore</ion-button>
+      <ion-button (click)="getItems()">Mostra oggetti da Firestore</ion-button>
+
+      <ion-list>
+        <ion-item *ngFor="let item of items">
+          {{ item.name }} - {{ item.created.toDate() | date: 'short' }}
+        </ion-item>
+      </ion-list>-->
+
+
       <!-- Se un'attività è avviata, mostra il riquadro -->
       <ion-card *ngIf="isActivityStarted">
         <ion-card-header>
