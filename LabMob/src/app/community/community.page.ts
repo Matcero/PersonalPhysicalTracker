@@ -1,4 +1,3 @@
-// Importa i moduli necessari
 import { Component, OnInit } from '@angular/core';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { GoogleAuthProvider } from 'firebase/auth';
@@ -15,6 +14,10 @@ export class CommunityPage implements OnInit {
   user: any = null;
   loginMessage: string = 'Benvenuto nella sezione Community!';
 
+  // Nuove proprietà per il login via email
+  email: string = '';
+  password: string = '';
+
   constructor(private afAuth: AngularFireAuth, private router: Router) {}
 
   ngOnInit() {
@@ -29,14 +32,12 @@ export class CommunityPage implements OnInit {
     });
   }
 
-  // Funzione per effettuare il login con Google
+  // Funzione per il login con Google
   async loginWithGoogle() {
     const provider = new GoogleAuthProvider();
 
     try {
-      // Controlla se l'app è su una piattaforma Capacitor
       if (isPlatform('capacitor')) {
-        // Chiama Device.getInfo() solo su dispositivi mobili
         const info = await Device.getInfo();
 
         if (info.platform === 'android') {
@@ -45,7 +46,6 @@ export class CommunityPage implements OnInit {
           this.user = result.user;
         }
       } else {
-        // Usa signInWithPopup per il web
         const result = await this.afAuth.signInWithPopup(provider);
         this.user = result.user;
       }
@@ -54,10 +54,47 @@ export class CommunityPage implements OnInit {
       this.router.navigate(['/home']);
 
     } catch (error) {
-      console.error('Errore durante il login:', error);
+      if (error instanceof Error) {
+        this.loginMessage = 'Errore durante il login: ' + error.message;
+      } else {
+        this.loginMessage = 'Errore sconosciuto';
+      }
     }
   }
 
+  // Funzione per il login con email e password
+  async loginWithEmail() {
+    try {
+      const userCredential = await this.afAuth.signInWithEmailAndPassword(this.email, this.password);
+      this.user = userCredential.user;
+      this.loginMessage = 'Login con email effettuato!';
+      this.router.navigate(['/home']);
+    } catch (error) {
+      if (error instanceof Error) {
+        this.loginMessage = 'Errore durante il login con email: ' + error.message;
+      } else {
+        this.loginMessage = 'Errore sconosciuto durante il login';
+      }
+    }
+  }
+
+  // Funzione per la registrazione con email e password
+  async registerWithEmail() {
+    try {
+      const userCredential = await this.afAuth.createUserWithEmailAndPassword(this.email, this.password);
+      this.user = userCredential.user;
+      this.loginMessage = 'Registrazione con email effettuata!';
+      this.router.navigate(['/home']);
+    } catch (error) {
+      if (error instanceof Error) {
+        this.loginMessage = 'Errore durante la registrazione: ' + error.message;
+      } else {
+        this.loginMessage = 'Errore sconosciuto durante la registrazione';
+      }
+    }
+  }
+
+  // Funzione per il logout
   async logout() {
     try {
       await this.afAuth.signOut();
@@ -66,10 +103,15 @@ export class CommunityPage implements OnInit {
       this.loginMessage = 'Benvenuto nella sezione Community!';
       this.router.navigate(['/community']);
     } catch (error) {
-      console.error('Errore durante il logout:', error);
+      if (error instanceof Error) {
+        this.loginMessage = 'Errore durante il logout: ' + error.message;
+      } else {
+        this.loginMessage = 'Errore sconosciuto durante il logout';
+      }
     }
   }
 
+  // Navigazione
   goToHome() {
     this.router.navigate(['/home']);
   }

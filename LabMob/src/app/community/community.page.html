@@ -18,6 +18,22 @@
             <!-- Bottone per il login con Google, visibile solo se l'utente non è loggato -->
             <ion-button *ngIf="!user" (click)="loginWithGoogle()">Login con Google</ion-button>
 
+            <!-- Campi per il login tramite email e password -->
+            <div *ngIf="!user">
+              <ion-item>
+                <ion-label position="floating">Email</ion-label>
+                <ion-input [(ngModel)]="email" type="email"></ion-input>
+              </ion-item>
+
+              <ion-item>
+                <ion-label position="floating">Password</ion-label>
+                <ion-input [(ngModel)]="password" type="password"></ion-input>
+              </ion-item>
+
+              <ion-button expand="block" (click)="loginWithEmail()">Login con Email</ion-button>
+              <ion-button expand="block" (click)="registerWithEmail()">Registrati con Email</ion-button>
+            </div>
+
             <!-- Bottone per il logout, visibile solo se l'utente è loggato -->
             <ion-button *ngIf="user" (click)="logout()">Logout</ion-button>
           </ion-card-content>
