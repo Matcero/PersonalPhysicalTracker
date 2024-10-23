@@ -12,6 +12,7 @@ dependencies {
     implementation project(':capacitor-firebase-app')
     implementation project(':capacitor-app')
     implementation project(':capacitor-background-runner')
+    implementation project(':capacitor-device')
     implementation project(':capacitor-geolocation')
     implementation project(':capacitor-google-maps')
     implementation project(':capacitor-haptics')

@@ -1,7 +1,10 @@
+// Importa i moduli necessari
 import { Component, OnInit } from '@angular/core';
-import { AngularFireAuth } from '@angular/fire/compat/auth'; // Modifica l'importazione
-import { GoogleAuthProvider } from 'firebase/auth'; // Mantieni questo
+import { AngularFireAuth } from '@angular/fire/compat/auth';
+import { GoogleAuthProvider } from 'firebase/auth';
 import { Router } from '@angular/router';
+import { isPlatform } from '@ionic/angular';
+import { Device } from '@capacitor/device'; // Importa direttamente il plugin
 
 @Component({
   selector: 'app-community',
@@ -9,20 +12,19 @@ import { Router } from '@angular/router';
   styleUrls: ['./community.page.scss'],
 })
 export class CommunityPage implements OnInit {
-  user: any = null;  // Variabile per tenere traccia dell'utente loggato
+  user: any = null;
   loginMessage: string = 'Benvenuto nella sezione Community!';
 
   constructor(private afAuth: AngularFireAuth, private router: Router) {}
 
   ngOnInit() {
-    // Ascolta lo stato di autenticazione dell'utente
     this.afAuth.authState.subscribe(user => {
       if (user) {
-        this.user = user;  // Memorizza l'utente loggato
-        this.loginMessage = 'Login effettuato!';  // Aggiorna il messaggio di login
+        this.user = user;
+        this.loginMessage = 'Login effettuato!';
       } else {
         this.user = null;
-        this.loginMessage = 'Benvenuto nella sezione Community!'; // Messaggio predefinito se non loggato
+        this.loginMessage = 'Benvenuto nella sezione Community!';
       }
     });
   }
@@ -30,25 +32,39 @@ export class CommunityPage implements OnInit {
   // Funzione per effettuare il login con Google
   async loginWithGoogle() {
     const provider = new GoogleAuthProvider();
+
     try {
-      const result = await this.afAuth.signInWithPopup(provider);
-      this.user = result.user;  // Memorizza l'utente
+      // Controlla se l'app è su una piattaforma Capacitor
+      if (isPlatform('capacitor')) {
+        // Chiama Device.getInfo() solo su dispositivi mobili
+        const info = await Device.getInfo();
+
+        if (info.platform === 'android') {
+          await this.afAuth.signInWithRedirect(provider);
+          const result = await this.afAuth.getRedirectResult();
+          this.user = result.user;
+        }
+      } else {
+        // Usa signInWithPopup per il web
+        const result = await this.afAuth.signInWithPopup(provider);
+        this.user = result.user;
+      }
+
       console.log('Login riuscito:', this.user);
-      this.loginMessage = 'Login effettuato!';  // Aggiorna il messaggio
-      this.router.navigate(['/home']);  // Naviga alla home
+      this.router.navigate(['/home']);
+
     } catch (error) {
       console.error('Errore durante il login:', error);
     }
   }
 
-  // Funzione per effettuare il logout
   async logout() {
     try {
       await this.afAuth.signOut();
-      this.user = null;  // Resetta l'utente loggato
+      this.user = null;
       console.log('Logout effettuato');
-      this.loginMessage = 'Benvenuto nella sezione Community!'; // Aggiorna il messaggio dopo il logout
-      this.router.navigate(['/community']); // Resta nella pagina Community
+      this.loginMessage = 'Benvenuto nella sezione Community!';
+      this.router.navigate(['/community']);
     } catch (error) {
       console.error('Errore durante il logout:', error);
     }
