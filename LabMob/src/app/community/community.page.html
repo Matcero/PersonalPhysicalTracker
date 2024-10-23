@@ -2,16 +2,16 @@
   <div class="ion-page" id="main-content">
     <ion-header>
       <ion-toolbar>
-        <ion-title>Community</ion-title>
+        <ion-title slot="start">Community</ion-title>  <!-- Titolo a sinistra -->
+        <!-- Bottone per il logout, visibile solo se l'utente è loggato -->
+        <ion-button slot="end" id="lout" *ngIf="user" (click)="logout()">Logout</ion-button>  <!-- Bottone a destra -->
       </ion-toolbar>
     </ion-header>
 
     <ion-content>
       <div>
         <ion-card>
-          <ion-card-header>
-            <ion-card-title>Interazione con la Community</ion-card-title>
-          </ion-card-header>
+
           <ion-card-content>
             <p>{{ loginMessage }}</p>  <!-- Mostra il messaggio di login -->
 
@@ -34,8 +34,8 @@
               <ion-button expand="block" (click)="registerWithEmail()">Registrati con Email</ion-button>
             </div>
 
-            <!-- Bottone per il logout, visibile solo se l'utente è loggato -->
-            <ion-button *ngIf="user" (click)="logout()">Logout</ion-button>
+
+
           </ion-card-content>
         </ion-card>
       </div>
