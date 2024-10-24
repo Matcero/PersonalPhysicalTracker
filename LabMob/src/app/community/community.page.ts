@@ -131,13 +131,24 @@ export class CommunityPage implements OnInit {
     }
   }
 
+  // Funzione per il logout
   async logout() {
     try {
       await this.afAuth.signOut();
       this.user = null;
-      console.log('Logout effettuato');
-      this.loginMessage = 'Benvenuto nella sezione Community!';
+
+      // Reset delle variabili per nascondere tutte le pagine eccetto il login
+      this.showUserPage = false;
+      this.showUserListPage = false;
+      this.showUploadPage = false;
+
+      // Aggiorna il messaggio di login e reindirizza alla schermata iniziale
+      this.loginMessage = 'Benvenuto nella sezione Community! Esegui il login per continuare.';
+
+      // Naviga alla pagina della community (schermata di login)
       this.router.navigate(['/community']);
+
+      console.log('Logout effettuato');
     } catch (error) {
       if (error instanceof Error) {
         this.loginMessage = 'Errore durante il logout: ' + error.message;
@@ -146,6 +157,7 @@ export class CommunityPage implements OnInit {
       }
     }
   }
+
 
   goToHome() {
     this.router.navigate(['/home']);
