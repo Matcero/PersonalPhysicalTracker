@@ -169,10 +169,17 @@ export class CommunityPage implements OnInit {
         const userData = e.payload.doc.data() as { email: string, uid: string };
         return {
           email: userData.email,
-          uid: userData.uid
+          uid: userData.uid,
+          isFollowing: false // Nuova proprietà per gestire il follow/unfollow
         };
-      }).filter(user => user.uid !== this.user?.uid); // Filtra l'utente corrente
+      }).filter(user => user.uid !== this.user?.uid);
     });
   }
+
+  // Funzione per seguire o smettere di seguire un utente
+  toggleFollow(user: any) {
+    user.isFollowing = !user.isFollowing;
+  }
+
 
 }

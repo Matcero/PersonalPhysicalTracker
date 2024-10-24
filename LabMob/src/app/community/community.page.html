@@ -78,13 +78,24 @@
             <ion-list>
               <ion-item *ngFor="let user of userList">
                 <ion-label>
-                  <h3>{{ user.email }}</h3> <!-- Mostra solo l'email -->
+                  <h3>{{ user.email }}</h3>
                 </ion-label>
+                <!-- Pulsante Follow/Unfollow con stili personalizzati -->
+                <ion-button (click)="toggleFollow(user)"
+                            fill="outline"
+                            [color]="user.isFollowing ? 'danger' : 'primary'">
+                  <ion-icon [name]="user.isFollowing ? 'person-remove-outline' : 'person-add-outline'"
+                            [style.color]="user.isFollowing ? 'var(--ion-color-danger)' : 'var(--ion-color-primary)'" slot="icon-only">
+                  </ion-icon>
+                  {{ user.isFollowing ? 'Unfollow' : 'Follow' }}
+                </ion-button>
               </ion-item>
             </ion-list>
             <ion-button (click)="showUserListPage = false">Torna indietro</ion-button>
           </ion-card-content>
         </ion-card>
+
+
 
         <!-- Card per la pagina Upload -->
         <ion-card *ngIf="showUploadPage">
