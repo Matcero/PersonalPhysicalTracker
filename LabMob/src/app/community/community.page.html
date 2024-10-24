@@ -67,10 +67,14 @@
 
             <h3>I tuoi follower:</h3>
             <ion-list *ngIf="user?.followers && user.followers.length > 0">
-              <ion-item *ngFor="let followerEmail of user.followers">
+              <ion-item *ngFor="let followerEmail of user.followers; let i = index">
                 <ion-label>
                   <p>Email Follower: {{ followerEmail }}</p>
                 </ion-label>
+                <!-- Aggiungi l'icona del cestino per rimuovere il follower -->
+                <ion-button slot="end" fill="clear" (click)="removeFollower(i)">
+                  <ion-icon name="trash-bin-outline"></ion-icon>
+                </ion-button>
               </ion-item>
             </ion-list>
             <p *ngIf="!user?.followers || user.followers.length === 0">Nessun follower trovato</p>
@@ -78,6 +82,7 @@
             <ion-button (click)="showUserPage = false">Torna indietro</ion-button>
           </ion-card-content>
         </ion-card>
+
 
 
         <!-- Card per la pagina Lista Utenti -->

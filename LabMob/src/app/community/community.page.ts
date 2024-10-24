@@ -247,6 +247,24 @@ displayUserListPage() {
     }
   }
 
+  // Funzione per rimuovere un follower dall'elenco
+  async removeFollower(index: number) {
+    try {
+      const followerIdToRemove = this.user.followers[index]; // Prendi l'ID o l'email del follower da rimuovere
+
+      // Aggiorna Firestore per rimuovere il follower
+      await this.firestore.collection('users').doc(this.user.uid).update({
+        followers: firebase.firestore.FieldValue.arrayRemove(followerIdToRemove)
+      });
+
+      // Rimuovi il follower localmente dopo aver aggiornato Firestore
+      this.user.followers.splice(index, 1);
+
+      console.log('Follower rimosso con successo');
+    } catch (error) {
+      console.error('Errore durante la rimozione del follower:', error);
+    }
+  }
 
 
 
