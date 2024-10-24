@@ -1,5 +1,5 @@
 /// <reference types="@types/google.maps" />7
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; // Importa ChangeDetectorRef
 import { GoogleMap } from '@capacitor/google-maps';
 import { ActivityService } from '../services/activity.service';
 import { Router } from '@angular/router';
@@ -29,13 +29,19 @@ export class HomePage implements OnInit {
   elapsedTime: number = 0;
   showBlinkingDot: boolean = false;
   steps: number = 0;
-lastAcceleration: { x: number, y: number, z: number } | null = { x: 0, y: 0, z: 0 };
+  lastAcceleration: { x: number, y: number, z: number } | null = { x: 0, y: 0, z: 0 };
   distance: number = 0; // Distance in kilometers
   calories: number = 0; // Calories burned
   stepLength: number = 0.00078; // Average step length in kilometers (approx. 0.78 meters)
   weight: number = 70; // User's weight in kg (adjust this value)
 
-  constructor(private activityService: ActivityService, private router: Router, private platform: Platform, private firestore: AngularFirestore) {}
+  constructor(
+      private activityService: ActivityService,
+      private router: Router,
+      private platform: Platform,
+      private firestore: AngularFirestore,
+      private cdr: ChangeDetectorRef // Aggiungi ChangeDetectorRef al costruttore
+    ) {}
 
    // Esempio di funzione per aggiungere dati
     addItem() {
@@ -233,21 +239,35 @@ lastAcceleration: { x: number, y: number, z: number } | null = { x: 0, y: 0, z: 
     return `${this.pad(hours)}:${this.pad(minutes)}:${this.pad(remainingSeconds)}`;
   }
 startStepCounting() {
+    let validMovementCount = 0; // Contatore per movimenti validi
+
     Motion.addListener('accel', (event: any) => {
-      const acceleration = event.accelerationIncludingGravity;
-      if (this.lastAcceleration) {
-        const deltaX = acceleration.x - this.lastAcceleration.x;
-        const deltaY = acceleration.y - this.lastAcceleration.y;
-        const deltaZ = acceleration.z - this.lastAcceleration.z;
-        const delta = Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
-        if (delta > 1.5) { // Step detection threshold
-          this.steps++;
-          this.distance = this.steps * this.stepLength; // Update distance based on steps
+        const acceleration = event.accelerationIncludingGravity;
+
+        if (this.lastAcceleration) {
+            const deltaX = acceleration.x - this.lastAcceleration.x;
+            const deltaY = acceleration.y - this.lastAcceleration.y;
+            const deltaZ = acceleration.z - this.lastAcceleration.z;
+            const delta = Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
+
+            // Aumenta la soglia di rilevamento
+            if (delta > 3.0) { // Soglia di rilevamento aumentata
+                validMovementCount++;
+
+                // Registra un passo ogni 5 movimenti validi
+                if (validMovementCount >= 5) {
+                    this.steps += 1; // Incremento minore per ridurre il conteggio
+                    this.distance = this.steps * this.stepLength; // Aggiorna la distanza
+                    validMovementCount = 0; // Resetta il contatore
+                }
+            }
         }
-      }
-      this.lastAcceleration = acceleration;
+
+        this.lastAcceleration = acceleration;
     });
-  }
+}
+
+
 
  stopStepCounting() {
     Motion.removeAllListeners();
@@ -256,10 +276,18 @@ startStepCounting() {
 
   // Update distance and calories every second
   updateActivityData() {
-    // Assume 0.05 kcal burned per step as an approximation
-    this.calories = this.steps * 0.05 * this.weight / 70; // Calorie calculation based on user weight
+    this.calories = this.steps * 0.05 * this.weight / 70;
+    this.distance = this.steps * this.stepLength; // Assicurati che la distanza sia aggiornata qui
+
+    this.currentActivity.calories = this.calories;
+    this.currentActivity.distance = this.distance;
+
     console.log(`Steps: ${this.steps}, Distance: ${this.distance.toFixed(2)} km, Calories: ${this.calories.toFixed(2)} kcal`);
+
+    // Forza l'aggiornamento del template
+    this.cdr.detectChanges();
   }
+
 
   pad(value: number) {
     return value < 10 ? '0' + value : value;
