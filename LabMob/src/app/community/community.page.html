@@ -121,9 +121,17 @@
           </ion-card-header>
           <ion-card-content>
             <p>Carica i tuoi file qui!</p>
+
+            <!-- Aggiungi il nuovo bottone arancione -->
+            <ion-button color="warning" fill="solid" (click)="onOrangeButtonClick()">
+              <ion-icon name="documents-outline"></ion-icon>
+              CARICA ATTIVITA'
+            </ion-button>
+
             <ion-button (click)="showUploadPage = false">Torna indietro</ion-button>
           </ion-card-content>
         </ion-card>
+
 
       </div>
     </ion-content>

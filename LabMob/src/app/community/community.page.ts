@@ -266,6 +266,10 @@ displayUserListPage() {
     }
   }
 
+  onOrangeButtonClick() {
+    // Questa funzione attualmente non fa nulla
+    console.log('Bottone arancione cliccato!');
+  }
 
 
 
