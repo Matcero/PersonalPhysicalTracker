@@ -42,6 +42,7 @@
     "background-runner-plugin": "file:background-runner-plugin",
     "cordova-plugin-pedometer": "^0.4.1",
     "firebase": "^10.14.1",
+    "firebase-admin": "^12.6.0",
     "ionicons": "^7.0.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",

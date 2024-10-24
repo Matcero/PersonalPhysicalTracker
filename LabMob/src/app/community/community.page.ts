@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
+import { AngularFirestore } from '@angular/fire/compat/firestore'; // Importa Firestore
 import { GoogleAuthProvider } from 'firebase/auth';
 import { Router } from '@angular/router';
 import { isPlatform } from '@ionic/angular';
-import { Device } from '@capacitor/device'; // Importa direttamente il plugin
+import { Device } from '@capacitor/device';
 
 @Component({
   selector: 'app-community',
@@ -12,58 +13,57 @@ import { Device } from '@capacitor/device'; // Importa direttamente il plugin
 })
 export class CommunityPage implements OnInit {
   showUserPage: boolean = false;
-  showUserListPage: boolean = false; // Nuova variabile per Lista Utenti
-  showUploadPage: boolean = false; // Nuova variabile per la pagina Upload
+  showUserListPage: boolean = false;
+  showUploadPage: boolean = false;
 
+  userList: any[] = [];
 
   user: any = null;
   loginMessage: string = 'Benvenuto nella sezione Community!';
 
-  // Nuove proprietà per il login via email
   email: string = '';
   password: string = '';
 
-  constructor(private afAuth: AngularFireAuth, private router: Router) {}
+  // Inietta Firestore nel costruttore
+  constructor(private afAuth: AngularFireAuth, private firestore: AngularFirestore, private router: Router) {}
 
   ngOnInit() {
     this.afAuth.authState.subscribe(user => {
       if (user) {
         this.user = user;
         this.loginMessage = 'Login effettuato!';
+        this.getUserList(); // Ottieni l'elenco degli utenti
       } else {
         this.user = null;
         this.loginMessage = 'Benvenuto nella sezione Community!';
       }
     });
   }
-// Funzione per mostrare la pagina dell'utente
+
   displayUserPage() {
     if (this.user) {
       this.showUserPage = true;
       this.showUserListPage = false;
-      this.showUploadPage = false; // Nasconde le altre pagine
+      this.showUploadPage = false;
     }
   }
 
-  // Funzione per mostrare la pagina della Lista Utenti
   displayUserListPage() {
     if (this.user) {
       this.showUserListPage = true;
       this.showUserPage = false;
-      this.showUploadPage = false; // Nasconde le altre pagine
+      this.showUploadPage = false;
     }
   }
 
-  // Funzione per mostrare la pagina Upload
   displayUploadPage() {
     if (this.user) {
       this.showUploadPage = true;
       this.showUserPage = false;
-      this.showUserListPage = false; // Nasconde le altre pagine
+      this.showUserListPage = false;
     }
   }
 
-  // Funzione per il login con Google
   async loginWithGoogle() {
     const provider = new GoogleAuthProvider();
 
@@ -93,7 +93,6 @@ export class CommunityPage implements OnInit {
     }
   }
 
-  // Funzione per il login con email e password
   async loginWithEmail() {
     try {
       const userCredential = await this.afAuth.signInWithEmailAndPassword(this.email, this.password);
@@ -109,11 +108,18 @@ export class CommunityPage implements OnInit {
     }
   }
 
-  // Funzione per la registrazione con email e password
   async registerWithEmail() {
     try {
       const userCredential = await this.afAuth.createUserWithEmailAndPassword(this.email, this.password);
       this.user = userCredential.user;
+
+      // Aggiungi l'utente alla collezione 'users' in Firestore
+      await this.firestore.collection('users').doc(this.user.uid).set({
+        uid: this.user.uid,
+        email: this.user.email,
+        createdAt: new Date()
+      });
+
       this.loginMessage = 'Registrazione con email effettuata!';
       this.router.navigate(['/home']);
     } catch (error) {
@@ -125,7 +131,6 @@ export class CommunityPage implements OnInit {
     }
   }
 
-  // Funzione per il logout
   async logout() {
     try {
       await this.afAuth.signOut();
@@ -142,7 +147,6 @@ export class CommunityPage implements OnInit {
     }
   }
 
-  // Navigazione
   goToHome() {
     this.router.navigate(['/home']);
   }
@@ -157,5 +161,16 @@ export class CommunityPage implements OnInit {
 
   goToCommunity() {
     this.router.navigate(['/community']);
+  }
+
+  async getUserList() {
+    this.firestore.collection('users').snapshotChanges().subscribe(data => {
+      this.userList = data.map((e: any) => {
+        return {
+          uid: e.payload.doc.id,
+          ...(e.payload.doc.data() as {})
+        };
+      });
+    });
   }
 }

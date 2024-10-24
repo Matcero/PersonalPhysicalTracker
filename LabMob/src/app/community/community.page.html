@@ -59,24 +59,41 @@
 
         <!-- Card per la pagina Utente -->
         <ion-card *ngIf="showUserPage">
+          <ion-card-header>
+            <ion-card-title>Profilo Utente</ion-card-title>
+          </ion-card-header>
           <ion-card-content>
-            <p>Benvenuto nella User Page!</p>
+            <p>Benvenuto {{ user?.email }}!</p>
             <ion-button (click)="showUserPage = false">Torna indietro</ion-button>
           </ion-card-content>
         </ion-card>
 
         <!-- Card per la pagina Lista Utenti -->
         <ion-card *ngIf="showUserListPage">
+          <ion-card-header>
+            <ion-card-title>Lista Utenti</ion-card-title>
+          </ion-card-header>
           <ion-card-content>
             <p>Benvenuto nella Lista Utenti!</p>
+            <ion-list>
+              <ion-item *ngFor="let user of userList">
+                <ion-label>
+                  <h3>{{ user.email }}</h3>
+                  <p>UID: {{ user.uid }}</p>
+                </ion-label>
+              </ion-item>
+            </ion-list>
             <ion-button (click)="showUserListPage = false">Torna indietro</ion-button>
           </ion-card-content>
         </ion-card>
 
-        <!-- Nuova Card per la pagina Upload -->
+        <!-- Card per la pagina Upload -->
         <ion-card *ngIf="showUploadPage">
+          <ion-card-header>
+            <ion-card-title>Pagina Upload</ion-card-title>
+          </ion-card-header>
           <ion-card-content>
-            <p>Benvenuto nella pagina di Upload!</p>
+            <p>Carica i tuoi file qui!</p>
             <ion-button (click)="showUploadPage = false">Torna indietro</ion-button>
           </ion-card-content>
         </ion-card>
