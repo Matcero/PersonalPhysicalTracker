@@ -8,15 +8,15 @@
 
     <ion-content>
       <ion-list>
-        <ion-item>
+        <ion-item (click)="displayUserPage()">
           <ion-icon name="person-outline" slot="start"></ion-icon>
           <ion-label>Utente</ion-label>
         </ion-item>
-        <ion-item>
+        <ion-item (click)="displayUserListPage()">
           <ion-icon name="list-circle-outline" slot="start"></ion-icon>
           <ion-label>Lista Utenti</ion-label>
         </ion-item>
-        <ion-item>
+        <ion-item (click)="displayUploadPage()"> <!-- Aggiungi il click handler per Upload -->
           <ion-icon name="cloud-upload-outline" slot="start"></ion-icon>
           <ion-label>Upload</ion-label>
         </ion-item>
@@ -37,7 +37,8 @@
 
     <ion-content>
       <div>
-        <ion-card>
+        <!-- Card di login che viene mostrata solo quando nessuna pagina utente, lista utenti o upload è attiva -->
+        <ion-card *ngIf="!showUserPage && !showUserListPage && !showUploadPage">
           <ion-card-content>
             <p>{{ loginMessage }}</p>
             <ion-button *ngIf="!user" (click)="loginWithGoogle()">Login con Google</ion-button>
@@ -55,6 +56,31 @@
             </div>
           </ion-card-content>
         </ion-card>
+
+        <!-- Card per la pagina Utente -->
+        <ion-card *ngIf="showUserPage">
+          <ion-card-content>
+            <p>Benvenuto nella User Page!</p>
+            <ion-button (click)="showUserPage = false">Torna indietro</ion-button>
+          </ion-card-content>
+        </ion-card>
+
+        <!-- Card per la pagina Lista Utenti -->
+        <ion-card *ngIf="showUserListPage">
+          <ion-card-content>
+            <p>Benvenuto nella Lista Utenti!</p>
+            <ion-button (click)="showUserListPage = false">Torna indietro</ion-button>
+          </ion-card-content>
+        </ion-card>
+
+        <!-- Nuova Card per la pagina Upload -->
+        <ion-card *ngIf="showUploadPage">
+          <ion-card-content>
+            <p>Benvenuto nella pagina di Upload!</p>
+            <ion-button (click)="showUploadPage = false">Torna indietro</ion-button>
+          </ion-card-content>
+        </ion-card>
+
       </div>
     </ion-content>
 

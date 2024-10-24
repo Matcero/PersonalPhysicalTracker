@@ -11,6 +11,11 @@ import { Device } from '@capacitor/device'; // Importa direttamente il plugin
   styleUrls: ['./community.page.scss'],
 })
 export class CommunityPage implements OnInit {
+  showUserPage: boolean = false;
+  showUserListPage: boolean = false; // Nuova variabile per Lista Utenti
+  showUploadPage: boolean = false; // Nuova variabile per la pagina Upload
+
+
   user: any = null;
   loginMessage: string = 'Benvenuto nella sezione Community!';
 
@@ -30,6 +35,32 @@ export class CommunityPage implements OnInit {
         this.loginMessage = 'Benvenuto nella sezione Community!';
       }
     });
+  }
+// Funzione per mostrare la pagina dell'utente
+  displayUserPage() {
+    if (this.user) {
+      this.showUserPage = true;
+      this.showUserListPage = false;
+      this.showUploadPage = false; // Nasconde le altre pagine
+    }
+  }
+
+  // Funzione per mostrare la pagina della Lista Utenti
+  displayUserListPage() {
+    if (this.user) {
+      this.showUserListPage = true;
+      this.showUserPage = false;
+      this.showUploadPage = false; // Nasconde le altre pagine
+    }
+  }
+
+  // Funzione per mostrare la pagina Upload
+  displayUploadPage() {
+    if (this.user) {
+      this.showUploadPage = true;
+      this.showUserPage = false;
+      this.showUserListPage = false; // Nasconde le altre pagine
+    }
   }
 
   // Funzione per il login con Google
