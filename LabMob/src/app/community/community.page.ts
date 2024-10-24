@@ -1,10 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
-import { AngularFirestore } from '@angular/fire/compat/firestore'; // Importa Firestore
 import { GoogleAuthProvider } from 'firebase/auth';
 import { Router } from '@angular/router';
 import { isPlatform } from '@ionic/angular';
 import { Device } from '@capacitor/device';
+import { AngularFirestore, AngularFirestoreDocument } from '@angular/fire/compat/firestore';
+import firebase from 'firebase/compat/app'; // Questo import serve per accedere a FieldValue
+
+interface User {
+  uid: string;
+  email: string;
+  followers?: string[]; // Lista di follower
+}
+
 
 @Component({
   selector: 'app-community',
@@ -40,21 +48,33 @@ export class CommunityPage implements OnInit {
     });
   }
 
+displayUserListPage() {
+  if (this.user) {
+    this.showUserListPage = true;
+    this.showUserPage = false;
+    this.showUploadPage = false;
+  }
+}
+
+
   displayUserPage() {
     if (this.user) {
       this.showUserPage = true;
       this.showUserListPage = false;
       this.showUploadPage = false;
+
+      // Recupera l'elenco dei follower
+      this.firestore.collection<User>('users').doc(this.user.uid).get().subscribe(doc => {
+        const data = doc.data() as User; // Cast a User
+        if (data && data.followers) {
+          this.user.followers = data.followers; // Salva i follower nell'utente corrente
+        } else {
+          this.user.followers = []; // Nessun follower
+        }
+      });
     }
   }
 
-  displayUserListPage() {
-    if (this.user) {
-      this.showUserListPage = true;
-      this.showUserPage = false;
-      this.showUploadPage = false;
-    }
-  }
 
   displayUploadPage() {
     if (this.user) {
@@ -178,20 +198,44 @@ export class CommunityPage implements OnInit {
   async getUserList() {
     this.firestore.collection('users').snapshotChanges().subscribe(data => {
       this.userList = data.map(e => {
-        const userData = e.payload.doc.data() as { email: string, uid: string };
+        const userData = e.payload.doc.data() as { email: string, uid: string, followers?: string[] };
         return {
           email: userData.email,
           uid: userData.uid,
-          isFollowing: false // Nuova proprietà per gestire il follow/unfollow
+          isFollowing: userData.followers?.includes(this.user.uid) || false // Verifica se l'utente corrente è un follower
         };
       }).filter(user => user.uid !== this.user?.uid);
     });
   }
 
+
   // Funzione per seguire o smettere di seguire un utente
-  toggleFollow(user: any) {
-    user.isFollowing = !user.isFollowing;
+  async toggleFollow(user: any) {
+    try {
+      if (!this.user) return;
+
+      if (user.isFollowing) {
+        // Rimuovi il follow
+        await this.firestore.collection('users').doc(user.uid).update({
+          followers: firebase.firestore.FieldValue.arrayRemove(this.user.uid)
+        });
+      } else {
+        // Aggiungi il follow
+        await this.firestore.collection('users').doc(user.uid).update({
+          followers: firebase.firestore.FieldValue.arrayUnion(this.user.uid)
+        });
+      }
+
+      // Aggiorna lo stato solo dopo il successo dell'operazione su Firestore
+      user.isFollowing = !user.isFollowing;
+
+    } catch (error) {
+      console.error('Errore durante il toggle follow:', error);
+    }
   }
+
+
+
 
 
 }

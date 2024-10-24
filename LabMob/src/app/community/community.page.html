@@ -64,9 +64,22 @@
           </ion-card-header>
           <ion-card-content>
             <p>Benvenuto {{ user?.email }}!</p>
+
+            <h3>I tuoi follower:</h3>
+            <ion-list *ngIf="user?.followers && user.followers.length > 0">
+              <ion-item *ngFor="let followerId of user.followers">
+                <!-- Recupera e mostra l'email o altre informazioni del follower -->
+                <ion-label>
+                  <p>ID Follower: {{ followerId }}</p>
+                </ion-label>
+              </ion-item>
+            </ion-list>
+            <p *ngIf="!user?.followers || user.followers.length === 0">Nessun follower trovato</p>
+
             <ion-button (click)="showUserPage = false">Torna indietro</ion-button>
           </ion-card-content>
         </ion-card>
+
 
         <!-- Card per la pagina Lista Utenti -->
         <ion-card *ngIf="showUserListPage">
