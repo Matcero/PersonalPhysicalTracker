@@ -165,12 +165,14 @@ export class CommunityPage implements OnInit {
 
   async getUserList() {
     this.firestore.collection('users').snapshotChanges().subscribe(data => {
-      this.userList = data.map((e: any) => {
+      this.userList = data.map(e => {
+        const userData = e.payload.doc.data() as { email: string, uid: string };
         return {
-          uid: e.payload.doc.id,
-          ...(e.payload.doc.data() as {})
+          email: userData.email,
+          uid: userData.uid
         };
-      });
+      }).filter(user => user.uid !== this.user?.uid); // Filtra l'utente corrente
     });
   }
+
 }
