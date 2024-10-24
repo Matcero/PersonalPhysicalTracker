@@ -97,41 +97,12 @@ displayUserListPage() {
     }
   }
 
-  async loginWithGoogle() {
-    const provider = new GoogleAuthProvider();
-
-    try {
-      if (isPlatform('capacitor')) {
-        const info = await Device.getInfo();
-
-        if (info.platform === 'android') {
-          await this.afAuth.signInWithRedirect(provider);
-          const result = await this.afAuth.getRedirectResult();
-          this.user = result.user;
-        }
-      } else {
-        const result = await this.afAuth.signInWithPopup(provider);
-        this.user = result.user;
-      }
-
-      console.log('Login riuscito:', this.user);
-      this.router.navigate(['/home']);
-
-    } catch (error) {
-      if (error instanceof Error) {
-        this.loginMessage = 'Errore durante il login: ' + error.message;
-      } else {
-        this.loginMessage = 'Errore sconosciuto';
-      }
-    }
-  }
-
   async loginWithEmail() {
     try {
       const userCredential = await this.afAuth.signInWithEmailAndPassword(this.email, this.password);
       this.user = userCredential.user;
       this.loginMessage = 'Login con email effettuato!';
-      this.router.navigate(['/home']);
+      this.router.navigate(['/community']);
     } catch (error) {
       if (error instanceof Error) {
         this.loginMessage = 'Errore durante il login con email: ' + error.message;
@@ -270,7 +241,6 @@ displayUserListPage() {
     // Questa funzione attualmente non fa nulla
     console.log('Bottone arancione cliccato!');
   }
-
 
 
 }

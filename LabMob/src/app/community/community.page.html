@@ -41,7 +41,6 @@
         <ion-card *ngIf="!showUserPage && !showUserListPage && !showUploadPage">
           <ion-card-content>
             <p>{{ loginMessage }}</p>
-            <ion-button *ngIf="!user" (click)="loginWithGoogle()">Login con Google</ion-button>
             <div *ngIf="!user">
               <ion-item>
                 <ion-label position="floating">Email</ion-label>
