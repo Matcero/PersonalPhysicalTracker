@@ -63,17 +63,30 @@ displayUserListPage() {
       this.showUserListPage = false;
       this.showUploadPage = false;
 
-      // Recupera l'elenco dei follower
+      // Recupera l'elenco dei follower con le loro email
       this.firestore.collection<User>('users').doc(this.user.uid).get().subscribe(doc => {
-        const data = doc.data() as User; // Cast a User
+        const data = doc.data() as User;
         if (data && data.followers) {
-          this.user.followers = data.followers; // Salva i follower nell'utente corrente
+          // Salva l'elenco di follower
+          const followerIds = data.followers;
+          this.user.followers = [];
+
+          // Recupera le email per ciascun follower
+          followerIds.forEach(followerId => {
+            this.firestore.collection<User>('users').doc(followerId).get().subscribe(followerDoc => {
+              const followerData = followerDoc.data() as User;
+              if (followerData) {
+                this.user.followers.push(followerData.email); // Aggiungi l'email del follower all'elenco
+              }
+            });
+          });
         } else {
-          this.user.followers = []; // Nessun follower
+          this.user.followers = [];
         }
       });
     }
   }
+
 
 
   displayUploadPage() {

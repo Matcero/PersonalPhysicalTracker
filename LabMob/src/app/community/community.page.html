@@ -67,10 +67,9 @@
 
             <h3>I tuoi follower:</h3>
             <ion-list *ngIf="user?.followers && user.followers.length > 0">
-              <ion-item *ngFor="let followerId of user.followers">
-                <!-- Recupera e mostra l'email o altre informazioni del follower -->
+              <ion-item *ngFor="let followerEmail of user.followers">
                 <ion-label>
-                  <p>ID Follower: {{ followerId }}</p>
+                  <p>Email Follower: {{ followerEmail }}</p>
                 </ion-label>
               </ion-item>
             </ion-list>
