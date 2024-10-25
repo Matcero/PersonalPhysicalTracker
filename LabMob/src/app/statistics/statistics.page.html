@@ -1,56 +1,44 @@
 <ion-app>
   <div class="ion-page" id="main-content">
-<ion-header>
-  <ion-toolbar>
-    <ion-title>Statistiche</ion-title>
-  </ion-toolbar>
-</ion-header>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>Statistiche</ion-title>
+      </ion-toolbar>
+    </ion-header>
 
-<ion-content>
-  <!-- Sezione per le statistiche -->
-  <div>
-    <ion-card>
-      <ion-card-header>
-        <ion-card-title>Statistiche delle Attività</ion-card-title>
-      </ion-card-header>
-      <ion-card-content>
-        <!-- Qui verranno visualizzate le statistiche -->
-        <p>Visualizzazione delle statistiche delle attività.</p>
-        <!-- Puoi inserire qui grafici come pie chart o line chart -->
-      </ion-card-content>
-    </ion-card>
-  </div>
-</ion-content>
-    <!-- Barra di navigazione in basso -->
+    <ion-content>
+      <div>
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>Statistiche delle Attività</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <canvas id="activityChart"></canvas>
+          </ion-card-content>
+        </ion-card>
+      </div>
+    </ion-content>
+
     <ion-footer>
       <ion-toolbar>
         <ion-tabs>
           <ion-tab-bar slot="bottom">
-
-            <!-- Home -->
             <ion-tab-button (click)="goToHome()">
               <ion-icon name="home-outline"></ion-icon>
               <ion-label>Home</ion-label>
             </ion-tab-button>
-
-            <!-- Statistiche -->
             <ion-tab-button (click)="goToStatistics()">
               <ion-icon name="stats-chart-outline"></ion-icon>
               <ion-label>Statistiche</ion-label>
             </ion-tab-button>
-
-            <!-- Calendar -->
             <ion-tab-button (click)="goToCalendar()">
               <ion-icon name="calendar-outline"></ion-icon>
               <ion-label>Calendario</ion-label>
             </ion-tab-button>
-
-            <!-- Community -->
             <ion-tab-button (click)="goToCommunity()">
               <ion-icon name="people-outline"></ion-icon>
               <ion-label>Community</ion-label>
             </ion-tab-button>
-
           </ion-tab-bar>
         </ion-tabs>
       </ion-toolbar>

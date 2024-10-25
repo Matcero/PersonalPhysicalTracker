@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router'; // Importa il Router
+import { Router } from '@angular/router';
+import { ActivityService } from '../services/activity.service';
+import { Chart, registerables } from 'chart.js';
 
 @Component({
   selector: 'app-statistics',
@@ -7,31 +9,77 @@ import { Router } from '@angular/router'; // Importa il Router
   styleUrls: ['./statistics.page.scss'],
 })
 export class StatisticsPage implements OnInit {
+  activities: any[] = [];
+  chart: any;
 
-  constructor(private router: Router) { }
-
-  ngOnInit() {
-    // Inizializza eventuali dati statistici
+  constructor(private router: Router, private activityService: ActivityService) {
+    // Register all Chart.js components
+    Chart.register(...registerables);
   }
 
-  // Funzione per andare alla home
-      goToHome() {
-        this.router.navigate(['/home']); // Naviga verso la home
+  async ngOnInit() {
+    await this.loadActivities();
+    this.createChart();
+  }
+
+  // Load activities from the service
+  async loadActivities() {
+    if (!this.activityService._storage) {
+      await this.activityService.init(); // Ensure that storage is ready
+    }
+
+    this.activities = await this.activityService.getActivityHistory();
+    console.log("Attività caricate:", this.activities);
+  }
+
+  // Create the pie chart
+  createChart() {
+    const activityCount = this.activities.reduce((acc, activity) => {
+      acc[activity.type] = (acc[activity.type] || 0) + 1;
+      return acc;
+    }, {});
+
+    const labels = Object.keys(activityCount);
+    const data = Object.values(activityCount);
+
+    this.chart = new Chart('activityChart', {
+      type: 'pie',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: data,
+          backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'], // Custom colors
+        }],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          title: {
+            display: true,
+            text: 'Statistiche delle Attività'
+          }
+        }
       }
+    });
+  }
 
-    // Add a method to navigate to the calendar
-    goToCalendar() {
-      this.router.navigate(['/calendar']);
-    }
+  // Navigation functions
+  goToHome() {
+    this.router.navigate(['/home']);
+  }
 
-    goToStatistics() {
-      this.router.navigate(['/statistics']);
-    }
+  goToCalendar() {
+    this.router.navigate(['/calendar']);
+  }
 
-    // Metodo per navigare verso la pagina Community
-    goToCommunity() {
-      this.router.navigate(['/community']);
-    }
+  goToStatistics() {
+    this.router.navigate(['/statistics']);
+  }
 
-
+  goToCommunity() {
+    this.router.navigate(['/community']);
+  }
 }
