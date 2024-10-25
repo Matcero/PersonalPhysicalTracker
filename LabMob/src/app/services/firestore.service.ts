@@ -25,49 +25,63 @@ export class FirestoreService {
   }
 
    // Metodo per caricare le attività dell'utente attualmente loggato
-    async uploadUserActivity(): Promise<string> {
-      const user = await this.afAuth.currentUser;
-      if (!user) {
-        console.error('Utente non autenticato');
-        return 'Errore: utente non autenticato';
-      }
+   async uploadUserActivity() {
+     const user = await this.afAuth.currentUser;
+     if (!user) {
+       console.error('Utente non autenticato');
+       return 'Utente non autenticato';
+     }
 
-      const userId = user.uid;
-      const activityHistory = await this.activityService.getActivityHistory();
-      let activitiesUploaded = 0;
+     const userId = user.uid; // Usa l'UID dell'utente
+     const activityHistory = await this.activityService.getActivityHistory();
 
-      for (const activity of activityHistory) {
-        const activityId = activity.id;
+     if (activityHistory.length === 0) {
+       return 'Nessuna attività presente';  // Nessuna attività da caricare
+     }
 
-        try {
-          const existingActivity = await this.firestore
-            .collection('users')
-            .doc(userId)
-            .collection('activities')
-            .ref.where('id', '==', activityId)
-            .get();
+     let activitiesUploaded = 0;
 
-          if (!existingActivity.empty) {
-            console.log(`Attività con ID ${activityId} già presente, upload ignorato.`);
-            continue;
-          }
+     for (const activity of activityHistory) {
+       // Controlla se l'attività esiste già
+       const activityExists = await this.checkIfActivityExists(userId, activity);
+       if (activityExists) {
+         console.log('Attività già caricata:', activity);
+         continue;  // Salta questa attività se è già stata caricata
+       }
 
-          await this.firestore
-            .collection('users')
-            .doc(userId)
-            .collection('activities')
-            .add(activity);
+       try {
+         await this.firestore
+           .collection('users')
+           .doc(userId) // Usa l'UID come documento
+           .collection('activities')
+           .add(activity);
+         activitiesUploaded++;
+         console.log(`Attività salvata per l'utente: ${userId}`);
+       } catch (error) {
+         console.error("Errore durante il salvataggio dell'attività:", error);
+       }
+     }
 
-          activitiesUploaded++;
-        } catch (error) {
-          console.error("Errore durante il salvataggio dell'attività:", error);
-        }
-      }
+     if (activitiesUploaded > 0) {
+       return `Attività caricate: ${activitiesUploaded}`;  // Ritorna il numero di attività caricate
+     } else {
+       return 'Attività già caricate';  // Se non ci sono nuove attività da caricare
+     }
+   }
 
-      return activitiesUploaded > 0
-        ? `Attività caricate: ${activitiesUploaded}`
-        : "Nessuna attività caricata o Attività già caricate";
-    }
+   // Metodo per controllare se un'attività esiste già nel database
+   private async checkIfActivityExists(userId: string, activity: any): Promise<boolean> {
+     const activitiesSnapshot = await this.firestore
+       .collection('users')
+       .doc(userId)
+       .collection('activities', ref => ref.where('id', '==', activity.id))  // Supponendo che 'id' sia l'identificatore unico dell'attività
+       .get().toPromise();
+
+     // Verifica se activitiesSnapshot è definito prima di accedere alla proprietà 'empty'
+     return activitiesSnapshot ? !activitiesSnapshot.empty : false;  // Restituisce true se l'attività esiste già
+   }
+
+
 
 
 

@@ -36,13 +36,11 @@ export class CommunityPage implements OnInit {
   // Inietta Firestore nel costruttore
   constructor(private afAuth: AngularFireAuth, private firestore: AngularFirestore, private router: Router, private firestoreService: FirestoreService) {}
 
-async onUploadButtonClick() {  // Aggiungi 'async' qui
-    this.uploadMessage = await this.firestoreService.uploadUserActivity();
-    console.log(this.uploadMessage);  // Stampa il messaggio di upload
-
-    // Non è più necessario chiamare 'uploadUserActivity' di nuovo
-    // quindi puoi rimuovere questa parte
+async onUploadButtonClick() {
+  this.uploadMessage = await this.firestoreService.uploadUserActivity();
+  console.log(this.uploadMessage);  // Stampa il messaggio di upload
 }
+
 
   ngOnInit() {
     this.afAuth.authState.subscribe(user => {
