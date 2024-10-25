@@ -14,26 +14,32 @@ export class StatisticsPage implements OnInit {
   chart: any;
 
   constructor(private router: Router, private activityService: ActivityService) {
-    // Register all Chart.js components and the datalabels plugin
+    // Registrare tutti i componenti di Chart.js e il plugin datalabels
     Chart.register(...registerables, ChartDataLabels);
   }
 
   async ngOnInit() {
+    // Non creiamo il grafico qui, ma lo faremo in ionViewWillEnter
     await this.loadActivities();
-    this.createChart();
   }
 
-  // Load activities from the service
+  // Metodo chiamato quando la vista sta per essere visualizzata
+  async ionViewWillEnter() {
+    await this.loadActivities();
+    this.createChart(); // Ricrea il grafico ogni volta che la vista è visualizzata
+  }
+
+  // Carica le attività dal servizio
   async loadActivities() {
     if (!this.activityService._storage) {
-      await this.activityService.init(); // Ensure that storage is ready
+      await this.activityService.init(); // Assicura che lo storage sia pronto
     }
 
     this.activities = await this.activityService.getActivityHistory();
     console.log("Attività caricate:", this.activities);
   }
 
-  // Create the pie chart
+  // Crea il grafico a torta
   createChart() {
     const activityCount: { [key: string]: number } = this.activities.reduce((acc, activity) => {
       acc[activity.type] = (acc[activity.type] || 0) + 1;
@@ -42,7 +48,12 @@ export class StatisticsPage implements OnInit {
 
     const labels: string[] = Object.keys(activityCount);
     const data: number[] = Object.values(activityCount);
-    const total = data.reduce((sum: number, value: number) => sum + value, 0); // Explicitly define types
+    const total = data.reduce((sum: number, value: number) => sum + value, 0); // Somma totale delle attività
+
+    // Se esiste un grafico precedente, distruggilo
+    if (this.chart) {
+      this.chart.destroy();
+    }
 
     this.chart = new Chart('activityChart', {
       type: 'pie',
@@ -50,7 +61,7 @@ export class StatisticsPage implements OnInit {
         labels: labels,
         datasets: [{
           data: data,
-          backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'], // Custom colors
+          backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'], // Colori personalizzati
         }],
       },
       options: {
@@ -64,20 +75,20 @@ export class StatisticsPage implements OnInit {
             text: 'Statistiche delle Attività'
           },
           datalabels: {
-            formatter: (value: number, context: any) => { // Explicitly define types
-              const percentage = ((value / total) * 100).toFixed(1) + '%'; // Calculate percentage
-              return percentage; // Return the percentage as label
+            formatter: (value: number, context: any) => {
+              const percentage = ((value / total) * 100).toFixed(1) + '%'; // Calcola la percentuale
+              return percentage; // Restituisce la percentuale come etichetta
             },
-            color: '#fff', // Color of the label
-            anchor: 'end', // Position the label at the end of the segment
-            align: 'end', // Align the label at the end of the segment
+            color: '#fff', // Colore dell'etichetta
+            anchor: 'end', // Posiziona l'etichetta alla fine del segmento
+            align: 'end', // Allinea l'etichetta alla fine del segmento
           },
         }
       }
     });
   }
 
-  // Navigation functions
+  // Funzioni di navigazione
   goToHome() {
     this.router.navigate(['/home']);
   }
