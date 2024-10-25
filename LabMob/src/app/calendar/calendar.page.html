@@ -7,8 +7,19 @@
     </ion-header>
 
     <ion-content>
-      <div *ngFor="let group of groupedActivities">
-        <!-- Titolo della data -->
+      <!-- Filtro attività -->
+      <ion-item>
+        <ion-label>Filtro Attività</ion-label>
+        <ion-select [(ngModel)]="selectedActivity" (ionChange)="filterActivities()">
+          <ion-select-option value="all">Tutte</ion-select-option>
+          <ion-select-option value="walking">Walking</ion-select-option>
+          <ion-select-option value="driving">Driving</ion-select-option>
+          <ion-select-option value="sitting">Sitting</ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <!-- Lista delle attività filtrate per data -->
+      <div *ngFor="let group of filteredGroupedActivities">
         <ion-card>
           <ion-card-header>
             <ion-card-title>{{ group.date }}</ion-card-title>

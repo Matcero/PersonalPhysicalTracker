@@ -9,6 +9,9 @@ import { ActivityService } from '../services/activity.service';
 })
 export class CalendarPage implements OnInit {
   groupedActivities: { date: string, activities: any[] }[] = [];
+  filteredGroupedActivities: { date: string, activities: any[] }[] = [];
+  selectedActivity: string = 'all'; // Valore predefinito per mostrare tutte le attività
+
 
   constructor(private router: Router, private activityService: ActivityService) { }
 
@@ -42,8 +45,20 @@ export class CalendarPage implements OnInit {
         date,
         activities: grouped[date]
       }));
+    this.filterActivities(); // Applica il filtro iniziale
   }
 
+    // Filtra le attività in base al tipo selezionato
+      filterActivities() {
+        if (this.selectedActivity === 'all') {
+          this.filteredGroupedActivities = this.groupedActivities;
+        } else {
+          this.filteredGroupedActivities = this.groupedActivities.map(group => ({
+            date: group.date,
+            activities: group.activities.filter(activity => activity.type === this.selectedActivity)
+          })).filter(group => group.activities.length > 0); // Rimuove le date senza attività
+        }
+      }
 
   // Metodo per eliminare un'attività
     async deleteActivity(activityId: number) {
