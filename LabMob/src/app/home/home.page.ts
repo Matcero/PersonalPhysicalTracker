@@ -19,6 +19,7 @@ const { App } = Plugins;
 })
 export class HomePage implements OnInit {
 
+  activityHistory: any[] = [];
   map!: GoogleMap;
   isActivityStarted: boolean = false;
   currentActivity: any = null;
@@ -58,6 +59,7 @@ export class HomePage implements OnInit {
   }
 
   async ngOnInit() {
+    this.loadActivities();
     this.createMap();
     this.platform.pause.subscribe(() => this.onAppBackground());
     this.platform.resume.subscribe(() => this.onAppForeground());
@@ -208,25 +210,40 @@ export class HomePage implements OnInit {
     this.activityService.startActivity(activityType);
   }
 
-  async stopActivity() {
-    console.log("Fermando attività");
-    this.isActivityStarted = false;
+ async stopActivity() {
+     console.log("Fermando attività");
+     this.isActivityStarted = false;
 
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
-    }
+     if (this.intervalId) {
+       clearInterval(this.intervalId);
+       this.intervalId = null;
+     }
 
-    this.showBlinkingDot = false;
-    this.activityService.stopActivity();
-    this.currentActivity = null;
+     this.showBlinkingDot = false;
 
-    this.stopStepCounting();
+     // Salva i dati dell'attività prima di impostare currentActivity a null
+     const activity = {
+         type: this.currentActivity?.type,  // Usa l'operatore di optional chaining
+         date: new Date(),
+         distance: this.distance || 0, // Km (valore a 0 se distance è undefined)
+         calories: this.calories || 0, // Calorie
+         duration: this.formatTime(this.elapsedTime), // Tempo
+         steps: this.steps || 0, // Passi (solo per camminata)
+     };
 
-    await LocalNotifications.cancel({ notifications: [{ id: 1 }] });
+     this.stopStepCounting();
 
-    this.resetCounters();
-  }
+     await LocalNotifications.cancel({ notifications: [{ id: 1 }] });
+     await this.activityService.saveActivity(activity); // Salva l'attività in locale
+     this.loadActivities(); // Aggiorna l'elenco
+
+     // Imposta currentActivity a null solo dopo aver salvato i dati
+     this.currentActivity = null;
+     this.activityService.stopActivity();
+
+     this.resetCounters();
+ }
+
 
   formatTime(seconds: number) {
     const hours = Math.floor(seconds / 3600);
@@ -330,6 +347,12 @@ goToCommunity() {
   this.router.navigate(['/community']);
 }
 
+// Ricarica la cronologia attività per visualizzarla nella schermata
+  async loadActivities() {
+    const history = await this.activityService.getActivityHistory();
+    // Qui aggiorni l'interfaccia con la cronologia attività
+    console.log("Cronologia attività:", history);
+  }
 
 
 

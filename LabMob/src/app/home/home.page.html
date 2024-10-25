@@ -70,6 +70,18 @@
         </ion-card-content>
       </ion-card>
 
+      <ion-list>
+        <ion-item *ngFor="let activity of activityHistory">
+          <ion-label>
+            <h2>{{ activity.type | titlecase }} - {{ activity.date | date:'short' }}</h2>
+            <p>Distanza: {{ activity.distance }} Km</p>
+            <p>Calorie: {{ activity.calories }} Kcal</p>
+            <p>Tempo: {{ activity.duration }}</p>
+            <p *ngIf="activity.type === 'walking'">Passi: {{ activity.steps }}</p>
+          </ion-label>
+        </ion-item>
+      </ion-list>
+
       <!-- Mappa -->
       <div id="map" style="height: 50%; width: 50%;"></div>
     </ion-content>
