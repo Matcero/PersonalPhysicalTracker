@@ -94,17 +94,18 @@ export class StatisticsPage implements OnInit {
             text: 'Statistiche delle Attività'
           },
           datalabels: {
+            anchor: 'center', // Posiziona l'etichetta al centro del segmento
+            align: 'center',  // Allinea l'etichetta al centro
             formatter: (value: number) => {
               const percentage = ((value / total) * 100).toFixed(1) + '%'; // Calcola la percentuale
               return percentage; // Ritorna la percentuale come etichetta
             },
             color: '#fff', // Colore dell'etichetta
-            anchor: 'end', // Posizione dell'etichetta alla fine del segmento
-            align: 'end', // Allinea l'etichetta alla fine del segmento
           },
         }
       }
     });
+
   }
 
   selectMonth(month: number) {
