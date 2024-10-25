@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Storage } from '@ionic/storage-angular';
+import { AngularFireAuth } from '@angular/fire/compat/auth'; // Importa AngularFireAuth qui
+
 
 @Injectable({
   providedIn: 'root',
@@ -7,9 +9,19 @@ import { Storage } from '@ionic/storage-angular';
 export class ActivityService {
   public _storage: Storage | null = null;
   private currentId = 0; // Contatore per ID incrementale
+  public user: any; // Aggiungi una proprietà per l'utente corrente
 
-  constructor(private storage: Storage) { // Inietta lo storage
+
+  constructor(private storage: Storage, private afAuth: AngularFireAuth) { // Inietta lo storage
     this.init();
+    this.afAuth.authState.subscribe(user => {
+          if (user) {
+            this.user = user; // Salva l'utente corrente
+          } else {
+            this.user = null;
+          }
+        });
+
   }
 
   // Inizializza lo storage e carica l'ultimo ID

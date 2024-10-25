@@ -11,7 +11,7 @@ import ChartDataLabels from 'chartjs-plugin-datalabels';
 })
 export class StatisticsPage implements OnInit {
   activities: any[] = [];
-  selectedUser: string = 'utente'; // Valore di default
+  selectedUser: string = 'Utente'; // Valore di default
   chart: Chart<'pie', number[], string> | null = null; // Imposta il tipo di chart
   selectedMonth: number; // Mese selezionato
   months: string[] = [
@@ -19,6 +19,9 @@ export class StatisticsPage implements OnInit {
     'Maggio', 'Giugno', 'Luglio', 'Agosto',
     'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
   ];
+
+  // Nuova proprietà per verificare se l'utente è loggato
+  isLoggedIn: boolean = false;
 
   constructor(private router: Router, private activityService: ActivityService) {
     Chart.register(...registerables, ChartDataLabels);
@@ -30,11 +33,22 @@ export class StatisticsPage implements OnInit {
 
   async ngOnInit() {
     await this.loadActivities();
+    // Controlla se l'utente è loggato
+    this.isLoggedIn = !!this.activityService.user; // Verifica se l'utente esiste
+    if (this.isLoggedIn) {
+      this.selectedUser = this.activityService.user.email; // Prendi l'email dell'utente
+    }
     this.createChart(); // Crea il grafico per il mese selezionato
   }
 
   // Metodo chiamato ogni volta che la pagina viene visualizzata
   ionViewWillEnter() {
+    this.isLoggedIn = !!this.activityService.user; // Aggiorna la verifica dell'utente loggato
+    if (this.isLoggedIn) {
+      this.selectedUser = this.activityService.user.email; // Aggiorna l'email dell'utente loggato
+    } else {
+      this.selectedUser = 'Utente'; // Valore di default
+    }
     this.createChart(); // Crea il grafico di nuovo
   }
 
