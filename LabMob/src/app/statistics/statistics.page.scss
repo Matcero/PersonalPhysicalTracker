@@ -21,3 +21,17 @@
 .month-button:hover {
   background: #e0e0e0; /* Colore di sfondo quando si passa il mouse */
 }
+
+button {
+  padding: 10px;
+  margin: 5px;
+  border: none;
+
+  cursor: pointer;
+}
+
+button.active {
+  background-color: #007bff; /* Colore di evidenziazione */
+  color: white; /* Colore del testo */
+}
+

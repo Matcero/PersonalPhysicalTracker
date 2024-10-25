@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ActivityService } from '../services/activity.service';
 import { Chart, registerables } from 'chart.js';
-import ChartDataLabels from 'chartjs-plugin-datalabels'; // Importa il plugin per i datalabels
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 @Component({
   selector: 'app-statistics',
@@ -11,69 +11,54 @@ import ChartDataLabels from 'chartjs-plugin-datalabels'; // Importa il plugin pe
 })
 export class StatisticsPage implements OnInit {
   activities: any[] = [];
-  chart: Chart<'pie', number[], string> | null = null; // Definisci il tipo del grafico
-  selectedMonth: number = new Date().getMonth(); // Mese selezionato, inizializzato con il mese corrente
-  months = [
-    { value: 0, label: 'Gennaio' },
-    { value: 1, label: 'Febbraio' },
-    { value: 2, label: 'Marzo' },
-    { value: 3, label: 'Aprile' },
-    { value: 4, label: 'Maggio' },
-    { value: 5, label: 'Giugno' },
-    { value: 6, label: 'Luglio' },
-    { value: 7, label: 'Agosto' },
-    { value: 8, label: 'Settembre' },
-    { value: 9, label: 'Ottobre' },
-    { value: 10, label: 'Novembre' },
-    { value: 11, label: 'Dicembre' },
+  chart: Chart<'pie', number[], string> | null = null; // Imposta il tipo di chart
+  selectedMonth: number; // Mese selezionato
+  months: string[] = [
+    'Gennaio', 'Febbraio', 'Marzo', 'Aprile',
+    'Maggio', 'Giugno', 'Luglio', 'Agosto',
+    'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
   ];
 
   constructor(private router: Router, private activityService: ActivityService) {
-    // Registra tutti i componenti di Chart.js e il plugin per i datalabels
     Chart.register(...registerables, ChartDataLabels);
+
+    // Imposta il mese corrente come selezionato
+    const currentDate = new Date();
+    this.selectedMonth = currentDate.getMonth(); // Ottiene il mese corrente (0-11)
   }
 
   async ngOnInit() {
-    await this.loadActivities(); // Carica le attività all'inizio
-    this.createChart(); // Crea il grafico all'inizio
+    await this.loadActivities();
+    this.createChart(); // Crea il grafico per il mese selezionato
   }
 
-  async ionViewWillEnter() {
-    await this.updateChart(); // Aggiorna il grafico quando la vista sta per essere visualizzata
-  }
-
+  // Carica le attività dal servizio
   async loadActivities() {
     if (!this.activityService._storage) {
       await this.activityService.init(); // Assicura che lo storage sia pronto
     }
+
     this.activities = await this.activityService.getActivityHistory();
     console.log("Attività caricate:", this.activities);
   }
 
+  // Crea il grafico
   createChart() {
-    // Distruggi il grafico esistente se presente
-    if (this.chart) {
-      this.chart.destroy();
-    }
+    const activityCount: { [key: string]: number } = {}; // Oggetto per contare le attività
 
-    // Filtra le attività per mese selezionato
-    const filteredActivities = this.activities.filter(activity => {
+    this.activities.forEach(activity => {
       const activityDate = new Date(activity.startTime);
-      return activityDate.getMonth() === this.selectedMonth;
+      if (activityDate.getMonth() === this.selectedMonth) {
+        activityCount[activity.type] = (activityCount[activity.type] || 0) + 1; // Incrementa il conteggio per tipo di attività
+      }
     });
 
-    const activityCount = filteredActivities.reduce((acc: { [key: string]: number }, activity) => {
-      acc[activity.type] = (acc[activity.type] || 0) + 1;
-      return acc;
-    }, {});
+    const labels: string[] = Object.keys(activityCount);
+    const data: number[] = Object.values(activityCount);
+    const total: number = data.reduce((sum: number, value: number) => sum + value, 0); // Assicurati che sum e value siano numeri
 
-    const labels = Object.keys(activityCount);
-    const data: number[] = Object.values(activityCount); // Definisci data come array di numeri
+    this.chart?.destroy(); // Distruggi il grafico precedente se esiste
 
-    // Inizializza total come numero
-    const total: number = data.reduce((sum: number, value: number) => sum + value, 0);
-
-    // Crea un nuovo grafico
     this.chart = new Chart<'pie', number[], string>('activityChart', {
       type: 'pie',
       data: {
@@ -94,32 +79,26 @@ export class StatisticsPage implements OnInit {
             text: 'Statistiche delle Attività'
           },
           datalabels: {
-            anchor: 'center', // Posiziona l'etichetta al centro del segmento
-            align: 'center',  // Allinea l'etichetta al centro
+            anchor: 'center',
+            align: 'center',
             formatter: (value: number) => {
-              const percentage = ((value / total) * 100).toFixed(1) + '%'; // Calcola la percentuale
-              return percentage; // Ritorna la percentuale come etichetta
+              const percentage = total ? ((value / total) * 100).toFixed(1) + '%' : '0%'; // Gestisci il caso di totale 0
+              return percentage;
             },
-            color: '#fff', // Colore dell'etichetta
+            color: '#fff',
           },
         }
       }
     });
-
   }
 
-  selectMonth(month: number) {
-    this.selectedMonth = month; // Aggiorna il mese selezionato
-    this.createChart(); // Ricarica il grafico con il nuovo mese
-  }
-
-  // Nuovo metodo per aggiornare il grafico
-  async updateChart() {
-    await this.loadActivities(); // Ricarica le attività
+  // Seleziona un mese
+  selectMonth(monthIndex: number) {
+    this.selectedMonth = monthIndex; // Aggiorna il mese selezionato
     this.createChart(); // Ricarica il grafico
   }
 
-  // Funzioni di navigazione
+  // Navigazione
   goToHome() {
     this.router.navigate(['/home']);
   }
@@ -129,7 +108,7 @@ export class StatisticsPage implements OnInit {
   }
 
   goToStatistics() {
-    this.router.navigate(['/statistics']); // Naviga a statistiche
+    this.router.navigate(['/statistics']);
   }
 
   goToCommunity() {

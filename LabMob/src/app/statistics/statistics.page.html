@@ -11,22 +11,21 @@
         <ion-card>
           <ion-card-header>
             <ion-card-title>Statistiche delle Attività</ion-card-title>
-            <div class="month-selector">
-              <div class="month-scroll">
-                <button *ngFor="let month of months"
-                        class="month-button"
-                        (click)="selectMonth(month.value)">
-                  {{ month.label }}
-                </button>
-              </div>
-            </div>
           </ion-card-header>
           <ion-card-content>
+            <div style="overflow-x: auto; white-space: nowrap;">
+              <button *ngFor="let month of months; let i = index"
+                      [ngClass]="{'active': selectedMonth === i}"
+                      (click)="selectMonth(i)">
+                {{ month }}
+              </button>
+            </div>
             <canvas id="activityChart"></canvas>
           </ion-card-content>
         </ion-card>
       </div>
     </ion-content>
+
 
 
     <ion-footer>
