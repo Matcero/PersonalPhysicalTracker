@@ -11,6 +11,7 @@ import ChartDataLabels from 'chartjs-plugin-datalabels';
 })
 export class StatisticsPage implements OnInit {
   activities: any[] = [];
+  selectedUser: string = 'utente'; // Valore di default
   chart: Chart<'pie', number[], string> | null = null; // Imposta il tipo di chart
   selectedMonth: number; // Mese selezionato
   months: string[] = [
@@ -30,6 +31,11 @@ export class StatisticsPage implements OnInit {
   async ngOnInit() {
     await this.loadActivities();
     this.createChart(); // Crea il grafico per il mese selezionato
+  }
+
+  // Metodo chiamato ogni volta che la pagina viene visualizzata
+  ionViewWillEnter() {
+    this.createChart(); // Crea il grafico di nuovo
   }
 
   // Carica le attività dal servizio

@@ -6,6 +6,8 @@
       </ion-toolbar>
     </ion-header>
 
+
+
     <ion-content>
       <div>
         <ion-card>
@@ -13,6 +15,14 @@
             <ion-card-title>Statistiche delle Attività</ion-card-title>
           </ion-card-header>
           <ion-card-content>
+            <!-- Aggiungi l'ion-select qui -->
+            <ion-item>
+              <ion-label>Utente</ion-label>
+              <ion-select [(ngModel)]="selectedUser">
+                <ion-select-option value="utente">Utente</ion-select-option>
+
+              </ion-select>
+            </ion-item>
             <div style="overflow-x: auto; white-space: nowrap;">
               <button *ngFor="let month of months; let i = index"
                       [ngClass]="{'active': selectedMonth === i}"
