@@ -119,7 +119,11 @@
             <ion-card-title>Pagina Upload</ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            <p>Carica i tuoi file qui!</p>
+            <div>
+              <p>Carica i tuoi file qui!</p>
+              <p>{{ uploadMessage }}</p>
+            </div>
+
 
             <!-- Aggiungi il nuovo bottone arancione -->
             <ion-button color="warning" fill="solid" (click)="onUploadButtonClick()">

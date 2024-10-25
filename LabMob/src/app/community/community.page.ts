@@ -24,7 +24,7 @@ export class CommunityPage implements OnInit {
   showUserPage: boolean = false;
   showUserListPage: boolean = false;
   showUploadPage: boolean = false;
-
+  uploadMessage: string = '';
   userList: any[] = [];
 
   user: any = null;
@@ -36,14 +36,13 @@ export class CommunityPage implements OnInit {
   // Inietta Firestore nel costruttore
   constructor(private afAuth: AngularFireAuth, private firestore: AngularFirestore, private router: Router, private firestoreService: FirestoreService) {}
 
-  // Funzione associata al pulsante di upload
-    onUploadButtonClick() {
-      this.firestoreService.uploadUserActivity().then(() => {
-        console.log('Attività caricate con successo');
-      }).catch(error => {
-        console.error('Errore durante il caricamento delle attività:', error);
-      });
-    }
+async onUploadButtonClick() {  // Aggiungi 'async' qui
+    this.uploadMessage = await this.firestoreService.uploadUserActivity();
+    console.log(this.uploadMessage);  // Stampa il messaggio di upload
+
+    // Non è più necessario chiamare 'uploadUserActivity' di nuovo
+    // quindi puoi rimuovere questa parte
+}
 
   ngOnInit() {
     this.afAuth.authState.subscribe(user => {

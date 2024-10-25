@@ -25,21 +25,21 @@ export class FirestoreService {
   }
 
    // Metodo per caricare le attività dell'utente attualmente loggato
-    async uploadUserActivity() {
+    async uploadUserActivity(): Promise<string> {
       const user = await this.afAuth.currentUser;
       if (!user) {
         console.error('Utente non autenticato');
-        return;
+        return 'Errore: utente non autenticato';
       }
 
       const userId = user.uid;
       const activityHistory = await this.activityService.getActivityHistory();
+      let activitiesUploaded = 0;
 
       for (const activity of activityHistory) {
-        const activityId = activity.id; // Assicurati che `activity` contenga un ID univoco per l'attività
+        const activityId = activity.id;
 
         try {
-          // Controlla se esiste già un'attività con lo stesso ID
           const existingActivity = await this.firestore
             .collection('users')
             .doc(userId)
@@ -52,19 +52,23 @@ export class FirestoreService {
             continue;
           }
 
-          // Se non esiste, aggiungila
           await this.firestore
             .collection('users')
             .doc(userId)
             .collection('activities')
             .add(activity);
 
-          console.log(`Attività con ID ${activityId} salvata per l'utente: ${userId}`);
+          activitiesUploaded++;
         } catch (error) {
           console.error("Errore durante il salvataggio dell'attività:", error);
         }
       }
+
+      return activitiesUploaded > 0
+        ? `Attività caricate: ${activitiesUploaded}`
+        : "Nessuna attività caricata o Attività già caricate";
     }
+
 
 
 
