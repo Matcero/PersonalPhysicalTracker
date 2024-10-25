@@ -32,22 +32,40 @@ export class FirestoreService {
         return;
       }
 
-      const userId = user.uid; // Usa l'UID dell'utente
+      const userId = user.uid;
       const activityHistory = await this.activityService.getActivityHistory();
 
       for (const activity of activityHistory) {
+        const activityId = activity.id; // Assicurati che `activity` contenga un ID univoco per l'attività
+
         try {
+          // Controlla se esiste già un'attività con lo stesso ID
+          const existingActivity = await this.firestore
+            .collection('users')
+            .doc(userId)
+            .collection('activities')
+            .ref.where('id', '==', activityId)
+            .get();
+
+          if (!existingActivity.empty) {
+            console.log(`Attività con ID ${activityId} già presente, upload ignorato.`);
+            continue;
+          }
+
+          // Se non esiste, aggiungila
           await this.firestore
             .collection('users')
-            .doc(userId) // Usa l'UID come documento
+            .doc(userId)
             .collection('activities')
             .add(activity);
-          console.log(`Attività salvata per l'utente: ${userId}`);
+
+          console.log(`Attività con ID ${activityId} salvata per l'utente: ${userId}`);
         } catch (error) {
           console.error("Errore durante il salvataggio dell'attività:", error);
         }
       }
     }
+
 
 
 }
