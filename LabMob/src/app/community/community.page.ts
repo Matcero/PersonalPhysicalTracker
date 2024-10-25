@@ -6,6 +6,7 @@ import { isPlatform } from '@ionic/angular';
 import { Device } from '@capacitor/device';
 import { AngularFirestore, AngularFirestoreDocument } from '@angular/fire/compat/firestore';
 import firebase from 'firebase/compat/app'; // Questo import serve per accedere a FieldValue
+import { FirestoreService } from '../services/firestore.service';
 
 interface User {
   uid: string;
@@ -33,7 +34,16 @@ export class CommunityPage implements OnInit {
   password: string = '';
 
   // Inietta Firestore nel costruttore
-  constructor(private afAuth: AngularFireAuth, private firestore: AngularFirestore, private router: Router) {}
+  constructor(private afAuth: AngularFireAuth, private firestore: AngularFirestore, private router: Router, private firestoreService: FirestoreService) {}
+
+  // Funzione associata al pulsante di upload
+    onUploadButtonClick() {
+      this.firestoreService.uploadUserActivity().then(() => {
+        console.log('Attività caricate con successo');
+      }).catch(error => {
+        console.error('Errore durante il caricamento delle attività:', error);
+      });
+    }
 
   ngOnInit() {
     this.afAuth.authState.subscribe(user => {
