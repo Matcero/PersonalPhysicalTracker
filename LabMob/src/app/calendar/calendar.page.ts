@@ -19,10 +19,12 @@ export class CalendarPage implements OnInit {
   // Carica le attività e raggruppale per data
   async loadAndGroupActivities() {
     if (!this.activityService._storage) {
-        await this.activityService.init(); // Assicura che lo storage sia pronto
-      }
+      await this.activityService.init(); // Assicura che lo storage sia pronto
+    }
+
     const activities = await this.activityService.getActivityHistory();
     console.log("Attività caricate:", activities);
+
     // Raggruppa le attività per data (come stringa in formato locale)
     const grouped = activities.reduce((acc: any, activity: any) => {
       const date = new Date(activity.startTime).toLocaleDateString();
@@ -33,12 +35,15 @@ export class CalendarPage implements OnInit {
       return acc;
     }, {});
 
-    // Trasforma l'oggetto raggruppato in un array per iterare facilmente
-    this.groupedActivities = Object.keys(grouped).map(date => ({
-      date,
-      activities: grouped[date]
-    }));
+    // Trasforma l'oggetto raggruppato in un array e ordina le date in ordine decrescente
+    this.groupedActivities = Object.keys(grouped)
+      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime()) // Ordine decrescente
+      .map(date => ({
+        date,
+        activities: grouped[date]
+      }));
   }
+
 
   // Metodo per eliminare un'attività
     async deleteActivity(activityId: number) {
