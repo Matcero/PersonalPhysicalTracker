@@ -1,0 +1,23 @@
+.month-selector {
+  overflow-x: auto; /* Abilita lo scorrimento orizzontale */
+  white-space: nowrap; /* Impedisce il wrapping del contenuto */
+  padding: 10px 0; /* Padding per il contenitore */
+}
+
+.month-scroll {
+  display: flex; /* Usa il flexbox per allineare i bottoni in linea */
+}
+
+.month-button {
+  border: none;
+  background: none;
+  padding: 10px 15px;
+  margin: 0 5px; /* Spaziatura tra i bottoni */
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.3s; /* Transizione per il hover */
+}
+
+.month-button:hover {
+  background: #e0e0e0; /* Colore di sfondo quando si passa il mouse */
+}
