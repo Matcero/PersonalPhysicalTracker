@@ -210,39 +210,35 @@ export class HomePage implements OnInit {
     this.activityService.startActivity(activityType);
   }
 
- async stopActivity() {
-     console.log("Fermando attività");
-     this.isActivityStarted = false;
+async stopActivity() {
+    console.log("Fermando attività");
+    this.isActivityStarted = false;
 
-     if (this.intervalId) {
-       clearInterval(this.intervalId);
-       this.intervalId = null;
-     }
+    if (this.intervalId) {
+        clearInterval(this.intervalId);
+        this.intervalId = null;
+    }
 
-     this.showBlinkingDot = false;
+    this.showBlinkingDot = false;
 
-     // Salva i dati dell'attività prima di impostare currentActivity a null
-     const activity = {
-         type: this.currentActivity?.type,  // Usa l'operatore di optional chaining
-         date: new Date(),
-         distance: this.distance || 0, // Km (valore a 0 se distance è undefined)
-         calories: this.calories || 0, // Calorie
-         duration: this.formatTime(this.elapsedTime), // Tempo
-         steps: this.steps || 0, // Passi (solo per camminata)
-     };
+    // Assicurati che tutti i dati siano raccolti prima di impostare `currentActivity` a null
+    const activity = {
+        id: await this.activityService.getNextId(), // Genera un ID incrementale univoco
+        type: this.currentActivity?.type,
+        startTime: this.currentActivity?.startTime,
+        endTime: new Date(),
+        distance: this.distance || 0,
+        calories: this.calories || 0,
+        duration: this.formatTime(this.elapsedTime),
+        steps: this.steps || 0,
+    };
 
-     this.stopStepCounting();
+    await this.activityService.saveActivity(activity); // Salva in un unico punto
 
-     await LocalNotifications.cancel({ notifications: [{ id: 1 }] });
-     await this.activityService.saveActivity(activity); // Salva l'attività in locale
-     this.loadActivities(); // Aggiorna l'elenco
-
-     // Imposta currentActivity a null solo dopo aver salvato i dati
-     this.currentActivity = null;
-     this.activityService.stopActivity();
-
-     this.resetCounters();
- }
+    this.resetCounters();
+    this.currentActivity = null; // Resetta l'attività corrente
+    await this.loadActivities(); // Aggiorna la lista delle attività salvate
+}
 
 
   formatTime(seconds: number) {

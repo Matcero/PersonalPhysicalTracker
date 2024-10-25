@@ -5,7 +5,7 @@ import { Storage } from '@ionic/storage-angular';
   providedIn: 'root',
 })
 export class ActivityService {
-  private _storage: Storage | null = null;
+  public _storage: Storage | null = null;
   private currentId = 0; // Contatore per ID incrementale
 
   constructor(private storage: Storage) { // Inietta lo storage
@@ -59,4 +59,25 @@ export class ActivityService {
       async getActivityHistory() {
         return this._storage ? await this._storage.get('activityHistory') || [] : [];
       }
+
+    // Aggiungi il seguente metodo alla classe ActivityService
+async deleteActivity(activityId: number) {
+  if (this._storage) {
+    // Ottieni lo storico delle attività
+    let activityHistory = await this._storage.get('activityHistory') || [];
+    // Filtra per eliminare solo l'attività con l'ID specifico
+    activityHistory = activityHistory.filter((activity: any) => activity.id !== activityId);
+    // Aggiorna lo storico
+    await this._storage.set('activityHistory', activityHistory);
+  }
+}
+
+async getNextId() {
+    this.currentId++;
+    await this._storage?.set('lastActivityId', this.currentId);
+    return this.currentId;
+}
+
+
+
 }
