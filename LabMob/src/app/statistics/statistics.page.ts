@@ -34,8 +34,12 @@ export class StatisticsPage implements OnInit {
   }
 
   async ngOnInit() {
-    await this.loadActivities();
-    this.createChart();
+    await this.loadActivities(); // Carica le attività all'inizio
+    this.createChart(); // Crea il grafico all'inizio
+  }
+
+  async ionViewWillEnter() {
+    await this.updateChart(); // Aggiorna il grafico quando la vista sta per essere visualizzata
   }
 
   async loadActivities() {
@@ -108,6 +112,12 @@ export class StatisticsPage implements OnInit {
     this.createChart(); // Ricarica il grafico con il nuovo mese
   }
 
+  // Nuovo metodo per aggiornare il grafico
+  async updateChart() {
+    await this.loadActivities(); // Ricarica le attività
+    this.createChart(); // Ricarica il grafico
+  }
+
   // Funzioni di navigazione
   goToHome() {
     this.router.navigate(['/home']);
@@ -118,7 +128,7 @@ export class StatisticsPage implements OnInit {
   }
 
   goToStatistics() {
-    this.router.navigate(['/statistics']);
+    this.router.navigate(['/statistics']); // Naviga a statistiche
   }
 
   goToCommunity() {
