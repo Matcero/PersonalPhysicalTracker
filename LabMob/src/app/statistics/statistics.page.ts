@@ -42,57 +42,32 @@ export class StatisticsPage implements OnInit {
     } else {
       this.selectedUser = 'Utente'; // Valore di default
     }
-    await this.loadActivities(); // Carica sempre le attività
+
+    await this.loadActivitiesForCurrentUser(); // Carica le attività dal dispositivo per l'utente loggato o non loggato
     this.createChart(); // Crea il grafico per il mese selezionato
   }
 
-  async onUserChange() {
-    if (this.selectedUser) {
-      console.log("Utente selezionato:", this.selectedUser);
-      await this.loadSelectedUserActivities(); // Carica le attività del nuovo utente selezionato
-      this.createChart(); // Crea nuovamente il grafico dopo aver caricato le attività
-    }
-  }
-
-  async loadSelectedUserActivities() {
-    try {
-      // Chiama il servizio Firestore per ottenere le attività dell'utente selezionato
-      this.activities = await this.firestoreService.getUserActivitiesByEmail(this.selectedUser);
-      console.log("Attività dell'utente selezionato:", this.activities);
-    } catch (error) {
-      console.error("Errore durante il caricamento delle attività dell'utente selezionato:", error);
-    }
-  }
-
   ionViewWillEnter() {
-    // Controlla se l'utente è loggato
+    // Ogni volta che entri nella pagina, ripristina i dati per l'utente loggato
     this.isLoggedIn = !!this.activityService.user; // Aggiorna la verifica dell'utente loggato
     if (this.isLoggedIn) {
       this.selectedUser = this.activityService.user.email; // Ripristina l'email dell'utente loggato
-      this.loadSelectedUserActivities(); // Carica le attività dell'utente loggato
+      this.loadFollowedUsers(); // Ricarica la lista degli utenti seguiti
     } else {
       this.selectedUser = 'Utente'; // Valore di default
-      this.loadActivities(); // Carica le attività memorizzate
     }
 
+    this.loadActivitiesForCurrentUser(); // Carica le attività dal dispositivo per l'utente loggato o non loggato
     this.createChart(); // Crea il grafico di nuovo
-
-    if (this.activityService.user) {
-      console.log("Utente autenticato:", this.activityService.user);
-      this.loadFollowedUsers(); // Esegue se l'utente è autenticato
-    } else {
-      console.log("Utente non autenticato");
-    }
   }
 
-  // Carica le attività dal servizio
-  async loadActivities() {
+  async loadActivitiesForCurrentUser() {
     if (!this.activityService._storage) {
       await this.activityService.init(); // Assicura che lo storage sia pronto
     }
 
-    this.activities = await this.activityService.getActivityHistory();
-    console.log("Attività caricate:", this.activities);
+    this.activities = await this.activityService.getActivityHistory(); // Carica le attività memorizzate nel dispositivo
+    console.log("Attività caricate dal dispositivo:", this.activities);
   }
 
   async loadFollowedUsers() {
@@ -108,11 +83,33 @@ export class StatisticsPage implements OnInit {
     }
   }
 
+  async onUserChange() {
+    if (this.selectedUser) {
+      console.log("Utente selezionato:", this.selectedUser);
+      if (this.selectedUser === this.activityService.user.email) {
+        await this.loadActivitiesForCurrentUser(); // Carica le attività dal dispositivo per l'utente loggato
+      } else {
+        await this.loadSelectedUserActivities(); // Carica le attività del nuovo utente selezionato da Firebase
+      }
+      this.createChart(); // Crea nuovamente il grafico dopo aver caricato le attività
+    }
+  }
+
+  async loadSelectedUserActivities() {
+    try {
+      // Chiama il servizio Firestore per ottenere le attività dell'utente selezionato
+      this.activities = await this.firestoreService.getUserActivitiesByEmail(this.selectedUser);
+      console.log("Attività dell'utente selezionato:", this.activities);
+    } catch (error) {
+      console.error("Errore durante il caricamento delle attività dell'utente selezionato:", error);
+    }
+  }
+
   // Crea il grafico
   createChart() {
     const activityCount: { [key: string]: number } = {}; // Oggetto per contare le attività
 
-    // Usa direttamente le attività dell'utente selezionato
+    // Usa direttamente le attività dell'utente loggato
     const activitiesToUse = this.activities;
 
     activitiesToUse.forEach(activity => {
