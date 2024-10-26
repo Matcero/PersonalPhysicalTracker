@@ -35,6 +35,14 @@ export class StatisticsPage implements OnInit {
   }
 
   async ngOnInit() {
+    await this.initializePage();
+  }
+
+  async ionViewWillEnter() {
+    await this.initializePage(); // Ricarica i dati ogni volta che entri nella pagina
+  }
+
+  private async initializePage() {
     this.isLoggedIn = !!this.activityService.user; // Verifica se l'utente esiste
     if (this.isLoggedIn) {
       this.selectedUser = this.activityService.user.email; // Prendi l'email dell'utente
@@ -43,22 +51,8 @@ export class StatisticsPage implements OnInit {
       this.selectedUser = 'Utente'; // Valore di default
     }
 
-    await this.loadActivitiesForCurrentUser(); // Carica le attività dal dispositivo per l'utente loggato o non loggato
+    await this.loadActivitiesForCurrentUser(); // Carica le attività dal dispositivo
     this.createChart(); // Crea il grafico per il mese selezionato
-  }
-
-  ionViewWillEnter() {
-    // Ogni volta che entri nella pagina, ripristina i dati per l'utente loggato
-    this.isLoggedIn = !!this.activityService.user; // Aggiorna la verifica dell'utente loggato
-    if (this.isLoggedIn) {
-      this.selectedUser = this.activityService.user.email; // Ripristina l'email dell'utente loggato
-      this.loadFollowedUsers(); // Ricarica la lista degli utenti seguiti
-    } else {
-      this.selectedUser = 'Utente'; // Valore di default
-    }
-
-    this.loadActivitiesForCurrentUser(); // Carica le attività dal dispositivo per l'utente loggato o non loggato
-    this.createChart(); // Crea il grafico di nuovo
   }
 
   async loadActivitiesForCurrentUser() {
