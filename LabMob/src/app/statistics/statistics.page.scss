@@ -35,3 +35,14 @@ button.active {
   color: white; /* Colore del testo */
 }
 
+.chart-container {
+  width: 100%; /* Rende il contenitore responsivo */
+  overflow-x: auto; /* Abilita lo scorrimento orizzontale */
+}
+
+.chart-wrapper {
+  min-width: 1200px; /* Imposta una larghezza minima per evitare il grafico schiacciato */
+  height: 400px; /* Altezza preferita per il grafico */
+}
+
+

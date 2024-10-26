@@ -165,89 +165,107 @@ export class StatisticsPage implements OnInit {
   }
 
   // Crea il grafico a linee per passi e chilometri
-  createStepsKilometersChart() {
-    const stepsData: number[] = [];
-    const kilometersData: number[] = [];
-    const labels: string[] = [];
+ createStepsKilometersChart() {
+   const stepsData: number[] = [];
+   const distanceData: number[] = [];
+   const labels: string[] = [];
 
-    const activitiesToUse = this.activities.filter(activity => {
-      const activityDate = activity.startTime instanceof Date ? activity.startTime : activity.startTime.toDate();
-      return activityDate.getMonth() === this.selectedMonth; // Filtra per mese selezionato
-    });
+   const activitiesToUse = this.activities.filter(activity => {
+     const activityDate = activity.startTime instanceof Date ? activity.startTime : activity.startTime.toDate();
+     return activityDate.getMonth() === this.selectedMonth;
+   });
 
-    // Raggruppa i dati per giorno
-    const dailyData: { [key: string]: { steps: number; kilometers: number } } = {};
-    activitiesToUse.forEach(activity => {
-      const activityDate = activity.startTime instanceof Date ? activity.startTime : activity.startTime.toDate();
-      const day = activityDate.toISOString().split('T')[0]; // Estrai solo la data (YYYY-MM-DD)
+   const dailyData: { [key: string]: { steps: number; distance: number } } = {};
+   activitiesToUse.forEach(activity => {
+     const activityDate = activity.startTime instanceof Date ? activity.startTime : activity.startTime.toDate();
+     const day = activityDate.toISOString().split('T')[0];
 
-      if (!dailyData[day]) {
-        dailyData[day] = { steps: 0, kilometers: 0 }; // Inizializza
-        labels.push(day); // Aggiungi la data come etichetta
-      }
+     if (!dailyData[day]) {
+       dailyData[day] = { steps: 0, distance: 0 };
+       labels.push(day);
+     }
 
-      dailyData[day].steps += activity.steps || 0; // Somma i passi (assicurati che l'attività abbia proprietà steps)
-      dailyData[day].kilometers += activity.kilometers || 0; // Somma i chilometri (assicurati che l'attività abbia proprietà kilometers)
-    });
+     dailyData[day].steps += activity.steps || 0;
+     dailyData[day].distance += activity.distance || 0;
+   });
 
-    // Estrai i dati dai risultati aggregati
-    for (const day of labels) {
-      stepsData.push(dailyData[day].steps);
-      kilometersData.push(dailyData[day].kilometers);
-    }
+   for (const day of labels) {
+     stepsData.push(dailyData[day].steps);
+     distanceData.push(dailyData[day].distance);
+   }
 
-    this.stepsKilometersChart?.destroy(); // Distruggi il grafico precedente se esiste
+   this.stepsKilometersChart?.destroy(); // Distruggi il grafico precedente se esiste
 
-    // Crea il nuovo grafico a linee
-    this.stepsKilometersChart = new Chart<'line', number[], string>('stepsKilometersChart', {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [
-          {
-            label: 'Passi',
-            data: stepsData,
-            borderColor: '#7B1FA2',
-            fill: false,
-            tension: 0.1
-          },
-          {
-            label: 'Chilometri',
-            data: kilometersData,
-            borderColor: '#4CAF50',
-            fill: false,
-            tension: 0.1
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: {
-            position: 'top',
-          },
-          title: {
-            display: true,
-            text: 'Passi e Chilometri per il Mese Selezionato'
-          },
-        },
-        scales: {
-          x: {
-            title: {
-              display: true,
-              text: 'Data'
-            }
-          },
-          y: {
-            title: {
-              display: true,
-              text: 'Valore'
-            }
-          }
-        }
-      }
-    });
-  }
+   this.stepsKilometersChart = new Chart<'line', number[], string>('stepsKilometersChart', {
+     type: 'line',
+     data: {
+       labels: labels,
+       datasets: [
+         {
+           label: 'Passi',
+           data: stepsData,
+           borderColor: '#7B1FA2',
+           fill: false,
+           tension: 0.1,
+           yAxisID: 'y1', // Assegna i passi a y1
+         },
+         {
+           label: 'Distanza (km)',
+           data: distanceData,
+           borderColor: '#4CAF50',
+           fill: false,
+           tension: 0.1,
+           yAxisID: 'y2', // Assegna i chilometri a y2
+         }
+       ]
+     },
+     options: {
+       responsive: true,
+       maintainAspectRatio: false,
+       plugins: {
+         legend: {
+           position: 'top',
+         },
+         title: {
+           display: true,
+           text: 'Passi e Distanza per il Mese Selezionato'
+         },
+       },
+       scales: {
+         x: {
+           title: {
+             display: true,
+             text: 'Data'
+           },
+           ticks: {
+             autoSkip: false,
+             maxRotation: 45,
+             minRotation: 45,
+           }
+         },
+         y1: { // Primo asse y per i passi
+           position: 'left',
+           title: {
+             display: true,
+             text: 'Passi'
+           }
+         },
+         y2: { // Secondo asse y per la distanza (km)
+           position: 'right',
+           title: {
+             display: true,
+             text: 'Distanza (km)'
+           },
+           grid: {
+             drawOnChartArea: false, // Rimuovi la griglia per evitare sovrapposizioni
+           }
+         }
+       }
+     }
+   });
+ }
+
+
 
   // Seleziona un mese
   selectMonth(monthIndex: number) {
