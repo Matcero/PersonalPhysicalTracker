@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ActivityService } from '../services/activity.service';
-import { FirestoreService } from '../services/firestore.service'; // Importa il servizio Firestore
+import { FirestoreService } from '../services/firestore.service';
 import { Chart, registerables } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
@@ -27,7 +27,7 @@ export class StatisticsPage implements OnInit {
   constructor(
     private router: Router,
     public activityService: ActivityService,
-    private firestoreService: FirestoreService // Aggiungi il servizio Firestore
+    private firestoreService: FirestoreService
   ) {
     Chart.register(...registerables, ChartDataLabels);
     const currentDate = new Date();
@@ -44,25 +44,24 @@ export class StatisticsPage implements OnInit {
     this.createChart(); // Crea il grafico per il mese selezionato
   }
 
-
   async onUserChange() {
-      if (this.selectedUser) {
-        console.log("Utente selezionato:", this.selectedUser);
-        await this.loadSelectedUserActivities(); // Carica le attività del nuovo utente selezionato
-      }
+    if (this.selectedUser) {
+      console.log("Utente selezionato:", this.selectedUser);
+      await this.loadSelectedUserActivities(); // Carica le attività del nuovo utente selezionato
+      this.createChart(); // Crea nuovamente il grafico dopo aver caricato le attività
     }
+  }
 
   async loadSelectedUserActivities() {
-      try {
-        // Chiama il servizio Firestore per ottenere le attività dell'utente selezionato
-        const userActivities = await this.firestoreService.getUserActivitiesByEmail(this.selectedUser);
-        console.log("Attività dell'utente selezionato:", userActivities);
-      } catch (error) {
-        console.error("Errore durante il caricamento delle attività dell'utente selezionato:", error);
-      }
+    try {
+      // Chiama il servizio Firestore per ottenere le attività dell'utente selezionato
+      this.activities = await this.firestoreService.getUserActivitiesByEmail(this.selectedUser);
+      console.log("Attività dell'utente selezionato:", this.activities);
+    } catch (error) {
+      console.error("Errore durante il caricamento delle attività dell'utente selezionato:", error);
     }
+  }
 
-  // Metodo chiamato ogni volta che la pagina viene visualizzata
   ionViewWillEnter() {
     this.isLoggedIn = !!this.activityService.user; // Aggiorna la verifica dell'utente loggato
     if (this.isLoggedIn) {
@@ -73,13 +72,13 @@ export class StatisticsPage implements OnInit {
     this.createChart(); // Crea il grafico di nuovo
 
     if (this.activityService.user) {
-          console.log("Utente autenticato:", this.activityService.user);
-          this.isLoggedIn = true;
-          this.loadFollowedUsers(); // Esegue se l'utente è autenticato
-        } else {
-          console.log("Utente non autenticato");
-          this.isLoggedIn = false;
-        }
+      console.log("Utente autenticato:", this.activityService.user);
+      this.isLoggedIn = true;
+      this.loadFollowedUsers(); // Esegue se l'utente è autenticato
+    } else {
+      console.log("Utente non autenticato");
+      this.isLoggedIn = false;
+    }
   }
 
   // Carica le attività dal servizio
@@ -92,29 +91,31 @@ export class StatisticsPage implements OnInit {
     console.log("Attività caricate:", this.activities);
   }
 
-  // Nuovo metodo per caricare gli utenti seguiti
-   async loadFollowedUsers() {
-      if (this.isLoggedIn) {
-        const userId = this.activityService.user.uid;
-        console.log("ID utente corrente in loadFollowedUsers:", userId);
-
-        // Recupero degli utenti seguiti
-        try {
-          this.followedUsers = await this.firestoreService.getFollowedUsers(userId);
-          console.log("Utenti seguiti:", this.followedUsers);
-        } catch (error) {
-          console.error("Errore durante il caricamento degli utenti seguiti:", error);
-        }
+  async loadFollowedUsers() {
+    if (this.isLoggedIn) {
+      const userId = this.activityService.user.uid;
+      console.log("ID utente corrente in loadFollowedUsers:", userId);
+      try {
+        this.followedUsers = await this.firestoreService.getFollowedUsers(userId);
+        console.log("Utenti seguiti:", this.followedUsers);
+      } catch (error) {
+        console.error("Errore durante il caricamento degli utenti seguiti:", error);
       }
     }
-
+  }
 
   // Crea il grafico
   createChart() {
     const activityCount: { [key: string]: number } = {}; // Oggetto per contare le attività
 
-    this.activities.forEach(activity => {
-      const activityDate = new Date(activity.startTime);
+    // Usa direttamente le attività dell'utente selezionato
+    const activitiesToUse = this.activities;
+
+    activitiesToUse.forEach(activity => {
+      // Assicurati che startTime sia un oggetto Timestamp
+      const activityDate = activity.startTime instanceof Date ? activity.startTime : activity.startTime.toDate();
+      console.log("Data attività:", activityDate, "Mese attività:", activityDate.getMonth()); // Log per verificare la data delle attività
+
       if (activityDate.getMonth() === this.selectedMonth) {
         activityCount[activity.type] = (activityCount[activity.type] || 0) + 1; // Incrementa il conteggio per tipo di attività
       }
@@ -126,37 +127,42 @@ export class StatisticsPage implements OnInit {
 
     this.chart?.destroy(); // Distruggi il grafico precedente se esiste
 
-    this.chart = new Chart<'pie', number[], string>('activityChart', {
-      type: 'pie',
-      data: {
-        labels: labels,
-        datasets: [{
-          data: data,
-          backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'], // Colori personalizzati
-        }],
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: {
-            position: 'top',
-          },
-          title: {
-            display: true,
-            text: 'Statistiche delle Attività'
-          },
-          datalabels: {
-            anchor: 'center',
-            align: 'center',
-            formatter: (value: number) => {
-              const percentage = total ? ((value / total) * 100).toFixed(1) + '%' : '0%'; // Gestisci il caso di totale 0
-              return percentage;
+    // Controlla se ci sono dati da visualizzare nel grafico
+    if (labels.length > 0) {
+      this.chart = new Chart<'pie', number[], string>('activityChart', {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'], // Colori personalizzati
+          }],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'top',
             },
-            color: '#fff',
-          },
+            title: {
+              display: true,
+              text: 'Statistiche delle Attività'
+            },
+            datalabels: {
+              anchor: 'center',
+              align: 'center',
+              formatter: (value: number) => {
+                const percentage = total ? ((value / total) * 100).toFixed(1) + '%' : '0%'; // Gestisci il caso di totale 0
+                return percentage;
+              },
+              color: '#fff',
+            },
+          }
         }
-      }
-    });
+      });
+    } else {
+      console.warn("Nessun dato disponibile per il grafico."); // Messaggio di avviso se non ci sono dati
+    }
   }
 
   // Seleziona un mese
