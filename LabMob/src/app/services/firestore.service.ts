@@ -35,6 +35,39 @@ export class FirestoreService {
        }
      }
 
+  async getUserActivitiesByEmail(email: string): Promise<any[]> {
+    try {
+      // Recupera l'utente tramite l'email
+      const userSnapshot = await this.firestore.collection('users', ref =>
+        ref.where('email', '==', email)
+      ).get().toPromise();
+
+      // Controlla se userSnapshot è definito e se è vuoto
+      if (!userSnapshot || userSnapshot.empty) {
+        console.log("Nessun utente trovato con l'email:", email);
+        return [];
+      }
+
+      // Prendi l'ID dell'utente trovato
+      const userId = userSnapshot.docs[0].id;
+
+      // Recupera le attività dell'utente
+      const activitiesSnapshot = await this.firestore.collection('users').doc(userId).collection('activities').get().toPromise();
+
+      // Controlla se activitiesSnapshot è definito prima di accedere ai suoi documenti
+      if (!activitiesSnapshot) {
+        console.log("Nessuna attività trovata per l'utente:", userId);
+        return [];
+      }
+
+      const activities = activitiesSnapshot.docs.map(doc => doc.data());
+      return activities;
+
+    } catch (error) {
+      console.error("Errore durante il recupero delle attività per email:", error);
+      return [];
+    }
+  }
 
 
   // Esempio di funzione per aggiungere dati

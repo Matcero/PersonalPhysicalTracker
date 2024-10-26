@@ -16,7 +16,7 @@
             <!-- Aggiungi l'ion-select qui -->
             <ion-item *ngIf="isLoggedIn">
               <ion-label>Utente</ion-label>
-              <ion-select [(ngModel)]="selectedUser">
+              <ion-select [(ngModel)]="selectedUser" (ionChange)="onUserChange()">
                 <ion-select-option value="{{activityService.user.email}}">{{activityService.user.email}}</ion-select-option>
                 <ion-select-option *ngFor="let user of followedUsers" [value]="user">{{user}}</ion-select-option>
               </ion-select>

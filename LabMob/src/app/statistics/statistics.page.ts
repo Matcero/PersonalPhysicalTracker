@@ -44,6 +44,24 @@ export class StatisticsPage implements OnInit {
     this.createChart(); // Crea il grafico per il mese selezionato
   }
 
+
+  async onUserChange() {
+      if (this.selectedUser) {
+        console.log("Utente selezionato:", this.selectedUser);
+        await this.loadSelectedUserActivities(); // Carica le attività del nuovo utente selezionato
+      }
+    }
+
+  async loadSelectedUserActivities() {
+      try {
+        // Chiama il servizio Firestore per ottenere le attività dell'utente selezionato
+        const userActivities = await this.firestoreService.getUserActivitiesByEmail(this.selectedUser);
+        console.log("Attività dell'utente selezionato:", userActivities);
+      } catch (error) {
+        console.error("Errore durante il caricamento delle attività dell'utente selezionato:", error);
+      }
+    }
+
   // Metodo chiamato ogni volta che la pagina viene visualizzata
   ionViewWillEnter() {
     this.isLoggedIn = !!this.activityService.user; // Aggiorna la verifica dell'utente loggato
