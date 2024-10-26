@@ -207,14 +207,14 @@ export class StatisticsPage implements OnInit {
           {
             label: 'Passi',
             data: stepsData,
-            borderColor: '#FF6384',
+            borderColor: '#7B1FA2',
             fill: false,
             tension: 0.1
           },
           {
             label: 'Chilometri',
             data: kilometersData,
-            borderColor: '#36A2EB',
+            borderColor: '#4CAF50',
             fill: false,
             tension: 0.1
           }
