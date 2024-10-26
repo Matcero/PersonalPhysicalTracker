@@ -7,6 +7,7 @@ import { Device } from '@capacitor/device';
 import { AngularFirestore, AngularFirestoreDocument } from '@angular/fire/compat/firestore';
 import firebase from 'firebase/compat/app'; // Questo import serve per accedere a FieldValue
 import { FirestoreService } from '../services/firestore.service';
+import { ActivityService } from '../services/activity.service';
 
 interface User {
   uid: string;
@@ -34,7 +35,7 @@ export class CommunityPage implements OnInit {
   password: string = '';
 
   // Inietta Firestore nel costruttore
-  constructor(private afAuth: AngularFireAuth, private firestore: AngularFirestore, private router: Router, private firestoreService: FirestoreService) {}
+  constructor(private afAuth: AngularFireAuth, private firestore: AngularFirestore, private router: Router, private firestoreService: FirestoreService, private activityService: ActivityService) {}
 
 async onUploadButtonClick() {
   this.uploadMessage = await this.firestoreService.uploadUserActivity();
@@ -43,17 +44,19 @@ async onUploadButtonClick() {
 
 
   ngOnInit() {
-    this.afAuth.authState.subscribe(user => {
-      if (user) {
-        this.user = user;
-        this.loginMessage = 'Login effettuato!';
-        this.getUserList(); // Ottieni l'elenco degli utenti
-      } else {
-        this.user = null;
-        this.loginMessage = 'Benvenuto nella sezione Community!';
+    this.afAuth.authState.subscribe((user) => {
+          if (user) {
+            this.user = user;
+            this.activityService.user = user; // Imposta l'utente in ActivityService
+            this.loginMessage = 'Login effettuato!';
+            this.getUserList();
+          } else {
+            this.user = null;
+            this.activityService.user = null; // Rimuovi l'utente da ActivityService
+            this.loginMessage = 'Benvenuto nella sezione Community!';
+          }
+        });
       }
-    });
-  }
 
 displayUserListPage() {
   if (this.user) {

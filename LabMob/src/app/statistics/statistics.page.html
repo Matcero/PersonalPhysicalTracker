@@ -14,10 +14,11 @@
           </ion-card-header>
           <ion-card-content>
             <!-- Aggiungi l'ion-select qui -->
-            <ion-item *ngIf="isLoggedIn"> <!-- Mostra solo se l'utente è loggato -->
+            <ion-item *ngIf="isLoggedIn">
               <ion-label>Utente</ion-label>
               <ion-select [(ngModel)]="selectedUser">
-                <ion-select-option value="{{selectedUser}}">{{selectedUser}}</ion-select-option>
+                <ion-select-option value="{{activityService.user.email}}">{{activityService.user.email}}</ion-select-option>
+                <ion-select-option *ngFor="let user of followedUsers" [value]="user">{{user}}</ion-select-option>
               </ion-select>
             </ion-item>
 
@@ -42,13 +43,13 @@
               <ion-icon name="home-outline"></ion-icon>
               <ion-label>Home</ion-label>
             </ion-tab-button>
-            <ion-tab-button (click)="goToStatistics()">
-              <ion-icon name="stats-chart-outline"></ion-icon>
-              <ion-label>Statistiche</ion-label>
-            </ion-tab-button>
             <ion-tab-button (click)="goToCalendar()">
               <ion-icon name="calendar-outline"></ion-icon>
               <ion-label>Calendario</ion-label>
+            </ion-tab-button>
+            <ion-tab-button (click)="goToStatistics()">
+              <ion-icon name="stats-chart-outline"></ion-icon>
+              <ion-label>Statistiche</ion-label>
             </ion-tab-button>
             <ion-tab-button (click)="goToCommunity()">
               <ion-icon name="people-outline"></ion-icon>

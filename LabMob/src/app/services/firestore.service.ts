@@ -14,6 +14,29 @@ export class FirestoreService {
       private activityService: ActivityService
     ) {}
 
+    // Nuovo metodo per ottenere gli utenti seguiti dall'utente corrente
+     async getFollowedUsers(userId: string): Promise<string[]> {
+       try {
+         const usersSnapshot = await this.firestore.collection('users', ref =>
+           ref.where('followers', 'array-contains', userId) // Ricerca utenti che contengono `userId` nei loro follower
+         ).get().toPromise();
+
+         if (!usersSnapshot) {
+           console.log("Nessun utente trovato con follower:", userId);
+           return [];
+         }
+
+         console.log("Snapshot utenti seguiti:", usersSnapshot.docs.map(doc => doc.data())); // Controlla i documenti ricevuti
+
+         return usersSnapshot.docs.map(doc => (doc.data() as { email: string }).email);
+       } catch (error) {
+         console.error("Errore durante il recupero dei follower:", error);
+         return [];
+       }
+     }
+
+
+
   // Esempio di funzione per aggiungere dati
   addItem(collection: string, data: any) {
     return this.firestore.collection(collection).add(data);
