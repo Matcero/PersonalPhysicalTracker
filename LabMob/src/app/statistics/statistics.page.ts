@@ -207,7 +207,7 @@ export class StatisticsPage implements OnInit {
            borderColor: '#7B1FA2',
            fill: false,
            tension: 0.1,
-           yAxisID: 'y1', // Assegna i passi a y1
+           yAxisID: 'y1',
          },
          {
            label: 'Distanza (km)',
@@ -215,7 +215,7 @@ export class StatisticsPage implements OnInit {
            borderColor: '#4CAF50',
            fill: false,
            tension: 0.1,
-           yAxisID: 'y2', // Assegna i chilometri a y2
+           yAxisID: 'y2',
          }
        ]
      },
@@ -230,6 +230,17 @@ export class StatisticsPage implements OnInit {
            display: true,
            text: 'Passi e Distanza per il Mese Selezionato'
          },
+         datalabels: {
+           align: 'top', // Posiziona l'etichetta in alto rispetto ai pallini
+           anchor: 'end', // Fissa l'ancoraggio
+           offset: 8, // Distanza in pixel dal pallino per evitare sovrapposizioni
+           color: '#fff', // Colore delle etichette
+           font: {
+             size: 10, // Dimensione del testo
+             weight: 'bold'
+           },
+           formatter: (value) => `${value}`, // Formatta l'etichetta per mostrare il valore
+         }
        },
        scales: {
          x: {
@@ -243,27 +254,28 @@ export class StatisticsPage implements OnInit {
              minRotation: 45,
            }
          },
-         y1: { // Primo asse y per i passi
+         y1: {
            position: 'left',
            title: {
              display: true,
              text: 'Passi'
            }
          },
-         y2: { // Secondo asse y per la distanza (km)
+         y2: {
            position: 'right',
            title: {
              display: true,
              text: 'Distanza (km)'
            },
            grid: {
-             drawOnChartArea: false, // Rimuovi la griglia per evitare sovrapposizioni
+             drawOnChartArea: false,
            }
          }
        }
      }
    });
  }
+
 
 
 
