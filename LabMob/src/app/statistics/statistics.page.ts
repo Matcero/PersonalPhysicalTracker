@@ -35,12 +35,14 @@ export class StatisticsPage implements OnInit {
   }
 
   async ngOnInit() {
-    await this.loadActivities();
-    await this.loadFollowedUsers(); // Carica gli utenti seguiti
     this.isLoggedIn = !!this.activityService.user; // Verifica se l'utente esiste
     if (this.isLoggedIn) {
       this.selectedUser = this.activityService.user.email; // Prendi l'email dell'utente
+      await this.loadFollowedUsers(); // Carica gli utenti seguiti
+    } else {
+      this.selectedUser = 'Utente'; // Valore di default
     }
+    await this.loadActivities(); // Carica sempre le attività
     this.createChart(); // Crea il grafico per il mese selezionato
   }
 
@@ -63,21 +65,23 @@ export class StatisticsPage implements OnInit {
   }
 
   ionViewWillEnter() {
+    // Controlla se l'utente è loggato
     this.isLoggedIn = !!this.activityService.user; // Aggiorna la verifica dell'utente loggato
     if (this.isLoggedIn) {
-      this.selectedUser = this.activityService.user.email; // Aggiorna l'email dell'utente loggato
+      this.selectedUser = this.activityService.user.email; // Ripristina l'email dell'utente loggato
+      this.loadSelectedUserActivities(); // Carica le attività dell'utente loggato
     } else {
       this.selectedUser = 'Utente'; // Valore di default
+      this.loadActivities(); // Carica le attività memorizzate
     }
+
     this.createChart(); // Crea il grafico di nuovo
 
     if (this.activityService.user) {
       console.log("Utente autenticato:", this.activityService.user);
-      this.isLoggedIn = true;
       this.loadFollowedUsers(); // Esegue se l'utente è autenticato
     } else {
       console.log("Utente non autenticato");
-      this.isLoggedIn = false;
     }
   }
 
@@ -162,6 +166,7 @@ export class StatisticsPage implements OnInit {
       });
     } else {
       console.warn("Nessun dato disponibile per il grafico."); // Messaggio di avviso se non ci sono dati
+      this.chart = null; // Opzionale: puoi resettare il grafico se non ci sono dati
     }
   }
 
