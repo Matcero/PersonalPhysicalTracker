@@ -14,6 +14,7 @@ export class StatisticsPage implements OnInit {
   activities: any[] = [];
   selectedUser: string = 'Utente'; // Valore di default
   chart: Chart<'pie', number[], string> | null = null; // Imposta il tipo di chart
+  stepsKilometersChart: Chart<'line', number[], string> | null = null; // Grafico per passi e km
   selectedMonth: number; // Mese selezionato
   months: string[] = [
     'Gennaio', 'Febbraio', 'Marzo', 'Aprile',
@@ -53,6 +54,7 @@ export class StatisticsPage implements OnInit {
 
     await this.loadActivitiesForCurrentUser(); // Carica le attività dal dispositivo
     this.createChart(); // Crea il grafico per il mese selezionato
+    this.createStepsKilometersChart(); // Crea il grafico a linee per passi e km
   }
 
   async loadActivitiesForCurrentUser() {
@@ -86,6 +88,7 @@ export class StatisticsPage implements OnInit {
         await this.loadSelectedUserActivities(); // Carica le attività del nuovo utente selezionato da Firebase
       }
       this.createChart(); // Crea nuovamente il grafico dopo aver caricato le attività
+      this.createStepsKilometersChart(); // Crea nuovamente il grafico a linee dopo aver caricato le attività
     }
   }
 
@@ -99,7 +102,7 @@ export class StatisticsPage implements OnInit {
     }
   }
 
-  // Crea il grafico
+  // Crea il grafico a torta
   createChart() {
     const activityCount: { [key: string]: number } = {}; // Oggetto per contare le attività
 
@@ -161,10 +164,96 @@ export class StatisticsPage implements OnInit {
     }
   }
 
+  // Crea il grafico a linee per passi e chilometri
+  createStepsKilometersChart() {
+    const stepsData: number[] = [];
+    const kilometersData: number[] = [];
+    const labels: string[] = [];
+
+    const activitiesToUse = this.activities.filter(activity => {
+      const activityDate = activity.startTime instanceof Date ? activity.startTime : activity.startTime.toDate();
+      return activityDate.getMonth() === this.selectedMonth; // Filtra per mese selezionato
+    });
+
+    // Raggruppa i dati per giorno
+    const dailyData: { [key: string]: { steps: number; kilometers: number } } = {};
+    activitiesToUse.forEach(activity => {
+      const activityDate = activity.startTime instanceof Date ? activity.startTime : activity.startTime.toDate();
+      const day = activityDate.toISOString().split('T')[0]; // Estrai solo la data (YYYY-MM-DD)
+
+      if (!dailyData[day]) {
+        dailyData[day] = { steps: 0, kilometers: 0 }; // Inizializza
+        labels.push(day); // Aggiungi la data come etichetta
+      }
+
+      dailyData[day].steps += activity.steps || 0; // Somma i passi (assicurati che l'attività abbia proprietà steps)
+      dailyData[day].kilometers += activity.kilometers || 0; // Somma i chilometri (assicurati che l'attività abbia proprietà kilometers)
+    });
+
+    // Estrai i dati dai risultati aggregati
+    for (const day of labels) {
+      stepsData.push(dailyData[day].steps);
+      kilometersData.push(dailyData[day].kilometers);
+    }
+
+    this.stepsKilometersChart?.destroy(); // Distruggi il grafico precedente se esiste
+
+    // Crea il nuovo grafico a linee
+    this.stepsKilometersChart = new Chart<'line', number[], string>('stepsKilometersChart', {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Passi',
+            data: stepsData,
+            borderColor: '#FF6384',
+            fill: false,
+            tension: 0.1
+          },
+          {
+            label: 'Chilometri',
+            data: kilometersData,
+            borderColor: '#36A2EB',
+            fill: false,
+            tension: 0.1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          title: {
+            display: true,
+            text: 'Passi e Chilometri per il Mese Selezionato'
+          },
+        },
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'Data'
+            }
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Valore'
+            }
+          }
+        }
+      }
+    });
+  }
+
   // Seleziona un mese
   selectMonth(monthIndex: number) {
     this.selectedMonth = monthIndex; // Aggiorna il mese selezionato
-    this.createChart(); // Ricarica il grafico
+    this.createChart(); // Ricarica il grafico a torta
+    this.createStepsKilometersChart(); // Ricarica il grafico a linee
   }
 
   // Navigazione
