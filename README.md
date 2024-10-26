@@ -13,6 +13,8 @@ cd LabMob
 npm install @capacitor/core @capacitor/cli
 npm install @capacitor/motion
 npm install @capacitor/local-notifications
+npm install chart.js chartjs-plugin-datalabels --save
+npm install @types/chart.js --save-dev
 
 ionic capacitor add android
 ionic serve

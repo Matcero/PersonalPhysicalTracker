@@ -112,103 +112,85 @@ export class HomePage implements OnInit {
   }
 
   // Avvia un'attività e richiede la geolocalizzazione
-  async startActivity(activityType: string) {
-    // Resetta i contatori e lo stato
-    this.resetCounters();
+ async startActivity(activityType: string) {
+     // Resetta i contatori e lo stato
+     this.resetCounters();
 
-    this.isActivityStarted = true;
-    this.showBlinkingDot = true;
-    this.currentActivity = {
-      type: activityType,
-      distance: 0,
-      calories: 0,
-      startTime: new Date(),
-      startLocation: { lat: 0, lng: 0 },
-    };
+     this.isActivityStarted = true;
+     this.showBlinkingDot = true;
+     this.currentActivity = {
+         type: activityType,
+         distance: 0,
+         calories: 0,
+         startTime: new Date(),
+         startLocation: { lat: 0, lng: 0 },
+     };
 
-    console.log("Avvio attività:", activityType);
+     console.log("Avvio attività:", activityType);
 
-    // Verifica la piattaforma e la geolocalizzazione
-    if (Capacitor.getPlatform() === 'web') {
-      if ('geolocation' in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          async (position) => {
-            console.log('Posizione attuale dal browser:', position);
-            this.startTracking(activityType, position.coords.latitude, position.coords.longitude);
-          },
-          (error) => {
-            console.error('Errore nella geolocalizzazione del browser:', error);
-          }
-        );
-      } else {
-        console.log('Geolocalizzazione non supportata nel browser');
-      }
-      return;
-    }
+     try {
+         const notificationGranted = await this.checkNotificationPermissions();
+         if (!notificationGranted) {
+             console.error('Permessi per le notifiche non concessi.');
+             return;
+         }
 
-    try {
-      const notificationGranted = await this.checkNotificationPermissions();
-      if (!notificationGranted) {
-        console.error('Permessi per le notifiche non concessi.');
-        return;
-      }
+         const geoPermission = await Geolocation.requestPermissions();
+         if (geoPermission.location === 'granted') {
+             const coordinates = await Geolocation.getCurrentPosition();
+             console.log('Posizione attuale:', coordinates);
+             this.startTracking(activityType, coordinates.coords.latitude, coordinates.coords.longitude);
+         } else {
+             console.log('Permesso di geolocalizzazione negato');
+         }
+     } catch (error) {
+         console.error('Errore durante la richiesta dei permessi o l\'ottenimento della posizione:', error);
+     }
+ }
 
-      const geoPermission = await Geolocation.requestPermissions();
-      if (geoPermission.location === 'granted') {
-        const coordinates = await Geolocation.getCurrentPosition();
-        console.log('Posizione attuale:', coordinates);
-        this.startTracking(activityType, coordinates.coords.latitude, coordinates.coords.longitude);
-      } else {
-        console.log('Permesso di geolocalizzazione negato');
-      }
-    } catch (error) {
-      console.error('Errore durante la richiesta dei permessi o l\'ottenimento della posizione:', error);
-    }
-  }
+ async startTracking(activityType: string, lat: number, lng: number) {
+     this.isActivityStarted = true;
+     this.elapsedTime = 0;
+     this.showBlinkingDot = true;
 
-  async startTracking(activityType: string, lat: number, lng: number) {
-    this.isActivityStarted = true;
-    this.elapsedTime = 0;
-    this.showBlinkingDot = true;
+     this.currentActivity = {
+         type: activityType,
+         distance: 0,
+         calories: 0,
+         startTime: new Date(),
+         startLocation: {
+             lat: lat,
+             lng: lng,
+         },
+     };
 
-    this.currentActivity = {
-      type: activityType,
-      distance: 0,
-      calories: 0,
-      startTime: new Date(),
-      startLocation: {
-        lat: lat,
-        lng: lng,
-      },
-    };
+     if (activityType === 'walking') {
+         this.startStepCounting();
+     }
 
-    if (activityType === 'walking') {
-      this.startStepCounting();
-    }
+     await this.startForegroundService();
 
-    await this.startForegroundService();
+     this.intervalId = setInterval(() => {
+         this.elapsedTime = Math.floor((Date.now() - this.currentActivity.startTime.getTime()) / 1000);
+         this.showBlinkingDot = !this.showBlinkingDot;
+         this.updateActivityData();
+     }, 1000);
 
-    this.intervalId = setInterval(() => {
-      this.elapsedTime = Math.floor((Date.now() - this.currentActivity.startTime.getTime()) / 1000);
-      this.showBlinkingDot = !this.showBlinkingDot;
-      this.updateActivityData();
-    }, 1000);
+     await LocalNotifications.schedule({
+         notifications: [
+             {
+                 id: 1,
+                 title: Attività ${activityType} in corso,
+                 body: L'attività di ${activityType} è in corso,
+                 ongoing: true,
+                 autoCancel: false,
+             },
+         ],
+     });
 
-    await LocalNotifications.schedule({
-      notifications: [
-        {
-          id: 1,
-          title: `Attività ${activityType} in corso`,
-          body: `L'attività di ${activityType} è in corso`,
-          ongoing: true,
-          autoCancel: false,
-        },
-      ],
-    });
-
-    console.log("Notifica persistente inviata.");
-    this.activityService.startActivity(activityType);
-  }
+     console.log("Notifica persistente inviata.");
+     this.activityService.startActivity(activityType);
+ }
 
 async stopActivity() {
     console.log("Fermando attività");
@@ -221,9 +203,8 @@ async stopActivity() {
 
     this.showBlinkingDot = false;
 
-    // Assicurati che tutti i dati siano raccolti prima di impostare `currentActivity` a null
     const activity = {
-        id: await this.activityService.getNextId(), // Genera un ID incrementale univoco
+        id: await this.activityService.getNextId(),
         type: this.currentActivity?.type,
         startTime: this.currentActivity?.startTime,
         endTime: new Date(),
@@ -236,53 +217,59 @@ async stopActivity() {
     await this.activityService.saveActivity(activity); // Salva in un unico punto
 
     this.resetCounters();
-    this.currentActivity = null; // Resetta l'attività corrente
-    await this.loadActivities(); // Aggiorna la lista delle attività salvate
+    this.currentActivity = null;
+    await this.loadActivities();
 }
+
 
 
   formatTime(seconds: number) {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const remainingSeconds = seconds % 60;
-    return `${this.pad(hours)}:${this.pad(minutes)}:${this.pad(remainingSeconds)}`;
+    return ${this.pad(hours)}:${this.pad(minutes)}:${this.pad(remainingSeconds)};
   }
 
-  resetCounters() {
-    this.steps = 0;
-    this.distance = 0;
-    this.calories = 0;
-    this.elapsedTime = 0;
-  }
+ resetCounters() {
+     this.steps = 0;
+     this.distance = 0;
+     this.calories = 0;
+     this.elapsedTime = 0;
+     this.lastAcceleration = { x: 0, y: 0, z: 0 }; // Resetta lastAcceleration per un nuovo avvio
+ }
 
-  startStepCounting() {
-    let validMovementCount = 0;
-    Motion.removeAllListeners();
-    Motion.addListener('accel', (event: any) => {
-      const acceleration = event.accelerationIncludingGravity;
+ startStepCounting() {
+     let validMovementCount = 0;
+     this.steps = 0; // Resetta i passi per iniziare un nuovo conteggio
+     this.lastAcceleration = { x: 0, y: 0, z: 0 }; // Resetta lastAcceleration
 
-      if (this.lastAcceleration) {
-        const deltaX = acceleration.x - this.lastAcceleration.x;
-        const deltaY = acceleration.y - this.lastAcceleration.y;
-        const deltaZ = acceleration.z - this.lastAcceleration.z;
-        const delta = Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
+     // Rimuove tutti i listener precedenti per evitare conflitti
+     Motion.removeAllListeners();
 
-        if (delta > 4.0) {
-          validMovementCount++;
-          if (validMovementCount >= 8) {
-            this.steps += 1;
-            validMovementCount = 0;
-           this.distance = parseFloat((this.steps * this.stepLength).toFixed(3)); // Distanza in km a 3 decimali
-           this.calories = parseFloat(this.calculateCalories(this.steps, this.weight).toFixed(3)); // Calorie a 3 decimali
-            this.cdr.detectChanges(); // Forza l'aggiornamento dell'interfaccia
-          }
-        }
-      }
+     Motion.addListener('accel', (event: any) => {
+         const acceleration = event.accelerationIncludingGravity;
 
-      this.lastAcceleration = acceleration;
-    });
-  }
+         if (this.lastAcceleration) {
+             const deltaX = acceleration.x - this.lastAcceleration.x;
+             const deltaY = acceleration.y - this.lastAcceleration.y;
+             const deltaZ = acceleration.z - this.lastAcceleration.z;
+             const delta = Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
 
+             if (delta > 4.0) {
+                 validMovementCount++;
+                 if (validMovementCount >= 8) {
+                     this.steps += 1;
+                     validMovementCount = 0;
+                     this.distance = parseFloat((this.steps * this.stepLength).toFixed(3)); // Distanza in km
+                     this.calories = parseFloat(this.calculateCalories(this.steps, this.weight).toFixed(3)); // Calorie
+                     this.cdr.detectChanges(); // Forza l'aggiornamento dell'interfaccia
+                 }
+             }
+         }
+
+         this.lastAcceleration = acceleration;
+     });
+ }
   stopStepCounting() {
     Motion.removeAllListeners();
   }
