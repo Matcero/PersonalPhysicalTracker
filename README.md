@@ -22,3 +22,4 @@ ionic serve
 ionic build
 ionic capacitor sync
 ionic capacitor open android
+
