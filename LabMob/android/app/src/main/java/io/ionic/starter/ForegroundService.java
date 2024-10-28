@@ -27,9 +27,6 @@ public class ForegroundService extends Service implements SensorEventListener {
   private long initialStepCount = -1;
   private PendingIntent pendingIntent;
 
-
-
-
   @Override
   public void onCreate() {
     super.onCreate();
@@ -51,7 +48,11 @@ public class ForegroundService extends Service implements SensorEventListener {
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
     Log.d("ForegroundService", "Servizio avviato");
+    // Non avviamo il tracking immediatamente
+    return START_STICKY;
+  }
 
+  public void startTracking() {
     Intent notificationIntent = new Intent(this, MainActivity.class);
     pendingIntent = PendingIntent.getActivity(
       this,
@@ -60,7 +61,7 @@ public class ForegroundService extends Service implements SensorEventListener {
       PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
     );
 
-    startForeground(1, getForegroundNotification());
+    startForeground(1, getForegroundNotification("Attività in corso", "Il monitoraggio è attivo"));
 
     sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
     stepCounterSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
@@ -71,13 +72,13 @@ public class ForegroundService extends Service implements SensorEventListener {
     }
 
     handler.post(updateNotificationRunnable);
-    return START_STICKY;
+    Log.d("ForegroundService", "Tracking attività avviato.");
   }
 
-  private Notification getForegroundNotification() {
+  private Notification getForegroundNotification(String title, String text) {
     return new NotificationCompat.Builder(this, CHANNEL_ID)
-      .setContentTitle("Attività in corso")
-      .setContentText("Servizio attivo")
+      .setContentTitle(title)
+      .setContentText(text)
       .setSmallIcon(android.R.drawable.ic_dialog_info)
       .setContentIntent(pendingIntent)
       .setOngoing(true)
@@ -87,9 +88,16 @@ public class ForegroundService extends Service implements SensorEventListener {
   @Override
   public void onDestroy() {
     super.onDestroy();
-    handler.removeCallbacks(updateNotificationRunnable);
-    sensorManager.unregisterListener(this);
-    Log.d("ForegroundService", "Servizio fermato");
+
+    // Disabilita l'aggiornamento della notifica
+    if (handler != null && updateNotificationRunnable != null) {
+      handler.removeCallbacks(updateNotificationRunnable);
+    }
+
+    // Rimuovi il listener del contapassi
+    if (sensorManager != null) {
+      sensorManager.unregisterListener(this);
+    }
   }
 
   @Override
@@ -101,8 +109,8 @@ public class ForegroundService extends Service implements SensorEventListener {
     long elapsedTimeMillis = System.currentTimeMillis() - startTime;
     String elapsedTime = formatElapsedTime(elapsedTimeMillis / 1000);
 
-    double distance = stepCount * 0.00078;
-    double calories = stepCount * 0.05;
+    double distance = stepCount * 0.00078; // Distanza in km
+    double calories = stepCount * 0.05;     // Calorie
 
     Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
       .setContentTitle("Attività in corso")

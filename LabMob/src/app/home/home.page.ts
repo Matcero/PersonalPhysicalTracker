@@ -119,6 +119,7 @@ export class HomePage implements OnInit {
 
   // Avvia un'attività e richiede la geolocalizzazione
   async startActivity(activityType: string) {
+    await this.startForegroundService();
     // Resetta i contatori e lo stato
     this.resetCounters();
 
@@ -197,24 +198,11 @@ export class HomePage implements OnInit {
     this.intervalId = setInterval(() => {
       this.elapsedTime = Math.floor((Date.now() - this.currentActivity.startTime.getTime()) / 1000);
       this.showBlinkingDot = !this.showBlinkingDot;
-      this.updateActivityData();
+      this.updateActivityData(); // Aggiorna i dati dell'attività
+      this.startForegroundService(); // Aggiorna la notifica con i nuovi dati
     }, 1000);
-
-    await LocalNotifications.schedule({
-      notifications: [
-        {
-          id: 1,
-          title: `Attività ${activityType} in corso`,
-          body: `L'attività di ${activityType} è in corso`,
-          ongoing: true,
-          autoCancel: false,
-        },
-      ],
-    });
-
-    console.log("Notifica persistente inviata.");
-    this.activityService.startActivity(activityType);
   }
+
 
 async stopActivity() {
     console.log("Fermando attività");
@@ -307,27 +295,40 @@ calculateCalories(steps: number, weight: number): number {
   }
 
   updateActivityData() {
-    console.log("Steps:", this.steps, "Distance:", this.distance, "Calories:", this.calories);
+    // Aggiorna la distanza e le calorie nel contesto corrente
     this.currentActivity.distance = this.distance;
     this.currentActivity.calories = this.calories;
-    this.cdr.markForCheck(); // Usa markForCheck invece di detectChanges per aggiornamenti più leggeri
+
+    // Notifica Angular che i dati sono stati aggiornati
+    this.cdr.markForCheck();
+
+    // Chiamata per aggiornare la notifica con i dati attuali
+    this.startForegroundService(); // Aggiorna la notifica
   }
+
 
 
   async startForegroundService() {
     if (Capacitor.getPlatform() === 'android') {
+      // Crea il corpo della notifica con i dettagli dell'attività
+      const body = `Tempo: ${this.formatTime(this.elapsedTime)} | Passi: ${this.steps} | Distanza: ${this.distance.toFixed(2)} km | Calorie: ${this.calories.toFixed(2)} kcal`;
+
       await LocalNotifications.schedule({
         notifications: [
           {
             id: 1,
             title: "Attività in corso",
-            body: "L'attività è ancora in esecuzione in background.",
+            body: body, // Corpo della notifica aggiornato
             ongoing: true,
+            autoCancel: false, // Assicurati che non venga cancellata automaticamente
           },
         ],
       });
+
+      console.log("Notifica persistente inviata con dettagli dell'attività.");
     }
   }
+
 
 
 goToHome() {
