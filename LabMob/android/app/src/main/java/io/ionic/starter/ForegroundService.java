@@ -28,17 +28,7 @@ public class ForegroundService extends Service implements SensorEventListener {
   private PendingIntent pendingIntent;
 
 
-  private BroadcastReceiver activityUpdateReceiver = new BroadcastReceiver() {
-    @Override
-    public void onReceive(Context context, Intent intent) {
-      if (ACTION_UPDATE_ACTIVITY.equals(intent.getAction())) {
-        long steps = intent.getLongExtra(EXTRA_STEPS, 0);
-        double distance = intent.getDoubleExtra(EXTRA_DISTANCE, 0);
-        double calories = intent.getDoubleExtra(EXTRA_CALORIES, 0);
-        updateNotification(steps, distance, calories);
-      }
-    }
-  };
+
 
   @Override
   public void onCreate() {
