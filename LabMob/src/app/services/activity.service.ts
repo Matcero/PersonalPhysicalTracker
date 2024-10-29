@@ -46,6 +46,21 @@ export class ActivityService {
   }
 
 
+  async getSavedTimes(): Promise<string[]> {
+    if (this._storage) {
+      // Ottiene l'elenco esistente degli orari salvati
+      const savedTimes = await this._storage.get('savedTimes') || [];
+
+      // Logga l'elenco degli orari salvati
+      console.log('Orari salvati:', savedTimes);
+
+      // Restituisce l'elenco degli orari
+      return savedTimes;
+    }
+    return [];
+  }
+
+
   // Avvia un'attività
   async startActivity(activityType: string) {
     const activity = {

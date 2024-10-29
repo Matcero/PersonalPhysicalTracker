@@ -100,8 +100,17 @@
             <!-- Pulsante per confermare l'orario -->
             <ion-button (click)="setCustomTime()">Setta Orario</ion-button>
           </div>
+
+          <!-- Nuovo pulsante rosso "Mostra Orari" sotto "Setta Orario" -->
+          <ion-button color="danger" (click)="showSavedTimes()">Mostra Orari</ion-button>
+          <ion-list *ngIf="savedTimes.length > 0">
+            <ion-item *ngFor="let time of savedTimes">
+              <ion-label>{{ time }}</ion-label>
+            </ion-item>
+          </ion-list>
         </ion-card-content>
       </ion-card>
+
 
 
 

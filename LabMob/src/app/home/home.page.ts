@@ -20,7 +20,7 @@ const { App } = Plugins;
 export class HomePage implements OnInit {
   customTime: string = '00:00'; // Orario impostabile manualmente, inizializzato a mezzanotte
    selectedTime: string = '12:00'; // Orario di default visualizzato all'avvio
-
+savedTimes: string[] = [];
   activityHistory: any[] = [];
   map!: GoogleMap;
   isActivityStarted: boolean = false;
@@ -62,6 +62,7 @@ export class HomePage implements OnInit {
 
   async ngOnInit() {
     this.loadActivities();
+    this.savedTimes = await this.activityService.getSavedTimes();
     this.createMap();
     this.setupPlatformListeners();
     this.platform.pause.subscribe(() => this.onAppBackground());
@@ -79,6 +80,12 @@ export class HomePage implements OnInit {
       this.startForegroundService();
     }
   }
+
+  async showSavedTimes() {
+      // Recupera gli orari salvati dal servizio
+      this.savedTimes = await this.activityService.getSavedTimes();
+    }
+
 
   setCustomTime() {
       this.activityService.saveTime(this.customTime); // Salva l'orario impostato
