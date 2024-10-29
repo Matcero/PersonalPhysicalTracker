@@ -80,8 +80,8 @@ export class HomePage implements OnInit {
     }
   }
 
-  setCustomTime(event: any) {
-      this.customTime = event.target.value; // Aggiorna l'orario personalizzato
+  setCustomTime() {
+      this.activityService.saveTime(this.customTime); // Salva l'orario impostato
     }
 
   setupPlatformListeners() {

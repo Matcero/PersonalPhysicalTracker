@@ -31,6 +31,21 @@ export class ActivityService {
       this.currentId = (await this._storage.get('lastActivityId')) || 0; // Carica l'ultimo ID salvato
     }
 
+  async saveTime(time: string) {
+    if (this._storage) {
+      // Ottiene l'elenco esistente degli orari salvati oppure crea un array vuoto
+      let savedTimes = (await this._storage.get('savedTimes')) || [];
+      savedTimes.push(time);
+
+      // Salva l'elenco aggiornato nella memoria
+      await this._storage.set('savedTimes', savedTimes);
+
+      // Logga l'elenco completo degli orari salvati
+      console.log('Orari salvati:', savedTimes);
+    }
+  }
+
+
   // Avvia un'attività
   async startActivity(activityType: string) {
     const activity = {

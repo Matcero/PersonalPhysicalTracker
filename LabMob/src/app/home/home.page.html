@@ -83,7 +83,7 @@
       </ion-list>
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Remainder Attività</ion-card-title>
+          <ion-card-title>Orologio Personalizzato</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <div style="display: flex; align-items: center;">
@@ -94,15 +94,15 @@
             <input
               type="time"
               [(ngModel)]="customTime"
-              (change)="setCustomTime($event)"
               style="margin-right: 10px;"
             />
 
             <!-- Pulsante per confermare l'orario -->
-            <ion-button (click)="setCustomTime(customTime)">Setta Orario</ion-button>
+            <ion-button (click)="setCustomTime()">Setta Orario</ion-button>
           </div>
         </ion-card-content>
       </ion-card>
+
 
 
 
