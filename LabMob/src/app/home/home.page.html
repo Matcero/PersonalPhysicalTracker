@@ -3,10 +3,10 @@
     <ion-header [translucent]="true">
       <ion-toolbar>
         <ion-title>Home</ion-title>
-        <ion-buttons slot="end">
-           <ion-checkbox (ionChange)="toggleForegroundService($event)"></ion-checkbox>
-          <ion-label>Abilita reminder </ion-label>
-        </ion-buttons>
+        <ion-item slot="end" lines="none"> <!-- Posiziona la checkbox a destra -->
+          <ion-label>Remainder Attività</ion-label>
+          <ion-checkbox [(ngModel)]="isPeriodicNotificationEnabled" (ionChange)="togglePeriodicNotification($event)"></ion-checkbox>
+        </ion-item>
       </ion-toolbar>
     </ion-header>
 

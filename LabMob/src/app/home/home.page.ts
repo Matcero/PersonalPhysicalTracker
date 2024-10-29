@@ -39,6 +39,7 @@ export class HomePage implements OnInit {
 
   isServiceEnabled: boolean = false; // Variabile per tenere traccia dello stato della checkbox
   customTime: string = '00:00'; // Orario impostabile manualmente, inizializzato a mezzanotte
+   isPeriodicNotificationEnabled: boolean = false;
    selectedTime: string = '12:00'; // Orario di default visualizzato all'avvio
 savedTimes: string[] = [];
   activityHistory: any[] = [];
@@ -353,6 +354,25 @@ calculateCalories(steps: number, weight: number): number {
 
 
 
+
+  async stopForegroundService() {
+    if (Capacitor.getPlatform() === 'android') {
+      // Cancella la notifica persistente utilizzando LocalNotifications
+      await LocalNotifications.cancel({ notifications: [{ id: 1 }] });
+      console.log("Notifica persistente rimossa e foreground service fermato.");
+    }
+  }
+
+  togglePeriodicNotification(event: any) {
+      this.isPeriodicNotificationEnabled = event.detail.checked;
+      if (this.isPeriodicNotificationEnabled) {
+        // Avvia la notifica periodica
+        this.startForegroundService();
+      } else {
+        // Ferma la notifica periodica
+        this.stopForegroundService();
+      }
+    }
 
 
 goToHome() {
