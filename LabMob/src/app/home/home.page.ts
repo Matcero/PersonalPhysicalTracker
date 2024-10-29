@@ -86,6 +86,12 @@ savedTimes: string[] = [];
       this.savedTimes = await this.activityService.getSavedTimes();
     }
 
+  async removeTime(time: string) {
+      await this.activityService.removeTime(time);
+      // Aggiorna la lista degli orari salvati
+      this.savedTimes = await this.activityService.getSavedTimes();
+    }
+
 
   setCustomTime() {
       this.activityService.saveTime(this.customTime); // Salva l'orario impostato

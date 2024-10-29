@@ -60,6 +60,23 @@ export class ActivityService {
     return [];
   }
 
+  async removeTime(time: string) {
+    if (this._storage) {
+      // Ottiene l'elenco esistente degli orari salvati
+      let savedTimes: string[] = await this._storage.get('savedTimes') || [];
+
+      // Filtra per rimuovere l'orario specificato
+      savedTimes = savedTimes.filter((savedTime: string) => savedTime !== time);
+
+      // Salva l'elenco aggiornato nella memoria
+      await this._storage.set('savedTimes', savedTimes);
+
+      // Logga l'elenco aggiornato degli orari salvati
+      console.log('Orari salvati dopo la rimozione:', savedTimes);
+    }
+  }
+
+
 
   // Avvia un'attività
   async startActivity(activityType: string) {
