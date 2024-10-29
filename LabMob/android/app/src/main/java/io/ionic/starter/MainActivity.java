@@ -20,16 +20,26 @@ public class MainActivity extends BridgeActivity {
 
     registerPlugin(BackgroundRunnerPlugin.class);
 
-    // Verifica la versione API prima di chiamare i metodi
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
       requestIgnoreBatteryOptimizations();
     }
 
-    // Aggiungi il WakeLock
     PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
     wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyApp::MyWakelockTag");
     wakeLock.acquire();
+  }
 
+  @Override
+  public void onStart() {
+    super.onStart();
+    // Interrompe il servizio quando l'app è in primo piano
+    stopForegroundService();
+  }
+
+  @Override
+  public void onStop() {
+    super.onStop();
+    // Avvia il servizio quando l'app va in background
     startForegroundService();
   }
 
@@ -42,7 +52,6 @@ public class MainActivity extends BridgeActivity {
     }
   }
 
-  // Metodo per avviare il servizio
   public void startForegroundService() {
     Intent serviceIntent = new Intent(this, ForegroundService.class);
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -52,7 +61,6 @@ public class MainActivity extends BridgeActivity {
     }
   }
 
-  // Metodo per interrompere il servizio
   public void stopForegroundService() {
     Intent stopIntent = new Intent(this, ForegroundService.class);
     stopService(stopIntent);
