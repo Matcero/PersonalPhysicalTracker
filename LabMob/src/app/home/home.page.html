@@ -3,8 +3,13 @@
     <ion-header [translucent]="true">
       <ion-toolbar>
         <ion-title>Home</ion-title>
+        <ion-buttons slot="end">
+           <ion-checkbox (ionChange)="toggleForegroundService($event)"></ion-checkbox>
+          <ion-label>Abilita reminder </ion-label>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
+
 
     <ion-content [fullscreen]="true">
 

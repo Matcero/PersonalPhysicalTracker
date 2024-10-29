@@ -9,15 +9,19 @@ import android.provider.Settings;
 import android.net.Uri;
 import androidx.annotation.Nullable;
 import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.PluginCall;
+import com.getcapacitor.PluginMethod;
+import com.getcapacitor.annotation.CapacitorPlugin;
+
 import io.ionic.backgroundrunner.plugin.BackgroundRunnerPlugin;
 
+@CapacitorPlugin(name = "App")
 public class MainActivity extends BridgeActivity {
   private PowerManager.WakeLock wakeLock;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-
     registerPlugin(BackgroundRunnerPlugin.class);
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -36,12 +40,6 @@ public class MainActivity extends BridgeActivity {
     stopForegroundService();
   }
 
-  @Override
-  public void onStop() {
-    super.onStop();
-    // Avvia il servizio quando l'app va in background
-    startForegroundService();
-  }
 
   private void requestIgnoreBatteryOptimizations() {
     PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
@@ -52,19 +50,22 @@ public class MainActivity extends BridgeActivity {
     }
   }
 
-  public void startForegroundService() {
+  @PluginMethod
+  public void startForegroundService(PluginCall call) {
     Intent serviceIntent = new Intent(this, ForegroundService.class);
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       startForegroundService(serviceIntent);
     } else {
       startService(serviceIntent);
     }
+    call.resolve();
   }
 
   public void stopForegroundService() {
     Intent stopIntent = new Intent(this, ForegroundService.class);
     stopService(stopIntent);
   }
+
 
   @Override
   public void onDestroy() {

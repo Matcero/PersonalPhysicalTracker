@@ -30,24 +30,25 @@ public class ForegroundService extends Service {
       @Override
       public void run() {
         sendNotification();
-        handler.postDelayed(this, 120000); // 20 secondi
+        handler.postDelayed(this, 20000); // 20 secondi
       }
     };
-    handler.post(runnable); // Avvia il runnable
   }
 
   private void sendNotification() {
-    Intent notificationIntent = new Intent(this, MainActivity.class);
-    PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
+    if (handler != null) {
+      Intent notificationIntent = new Intent(this, MainActivity.class);
+      PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
 
-    Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-      .setContentTitle("Promemoria Attività")
-      .setContentText("Siamo un po' statici qui? fai una bella attività!")
-      .setSmallIcon(android.R.drawable.ic_dialog_info)
-      .setContentIntent(pendingIntent)
-      .build();
+      Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+        .setContentTitle("Promemoria Attività")
+        .setContentText("Siamo un po' statici qui? fai una bella attività!")
+        .setSmallIcon(android.R.drawable.ic_dialog_info)
+        .setContentIntent(pendingIntent)
+        .build();
 
-    startForeground(1, notification); // Avvia il servizio in foreground con la notifica
+      startForeground(1, notification); // Avvia il servizio in foreground con la notifica
+    }
   }
 
   private void createNotificationChannel() {
@@ -65,8 +66,21 @@ public class ForegroundService extends Service {
     }
   }
 
+  public void stopNotification() {
+    handler.removeCallbacks(runnable); // Ferma il runnable
+    stopForeground(true); // Ferma il servizio foreground
+  }
+
+
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
+    if (intent != null && intent.getBooleanExtra("stopService", false)) {
+      stopSelf(); // Ferma il servizio se ricevuto un flag
+      return START_NOT_STICKY; // Non riavviare automaticamente il servizio
+    }
+
+    // Inizia a inviare notifiche solo quando il servizio è attivo
+    handler.post(runnable); // Avvia il runnable
     return START_STICKY; // Assicura che il servizio rimanga attivo
   }
 

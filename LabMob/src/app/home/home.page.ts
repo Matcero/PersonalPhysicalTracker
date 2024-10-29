@@ -9,8 +9,10 @@ import { LocalNotifications } from '@capacitor/local-notifications';
 import { Platform } from '@ionic/angular';
 import { Plugins } from '@capacitor/core';
 import { Motion } from '@capacitor/motion';
+import { App } from '@capacitor/app';
+
 import { AngularFirestore } from '@angular/fire/compat/firestore';
-const { App } = Plugins;
+
 
 @Component({
   selector: 'app-home',
@@ -18,6 +20,24 @@ const { App } = Plugins;
   styleUrls: ['./home.page.scss'],
 })
 export class HomePage implements OnInit {
+
+  toggleForegroundService(event: any) {
+    if (event.detail.checked) {
+      // Controlla se il plugin è accessibile
+      App.addListener('appStateChange', (state) => {
+        if (state.isActive) {
+          console.log('App in foreground');
+        }
+      });
+    } else {
+      console.log("Disabilita servizio foreground");
+    }
+  }
+
+
+
+
+  isServiceEnabled: boolean = false; // Variabile per tenere traccia dello stato della checkbox
   customTime: string = '00:00'; // Orario impostabile manualmente, inizializzato a mezzanotte
    selectedTime: string = '12:00'; // Orario di default visualizzato all'avvio
 savedTimes: string[] = [];
@@ -43,22 +63,6 @@ savedTimes: string[] = [];
     private cdr: ChangeDetectorRef // Aggiungi ChangeDetectorRef al costruttore
   ) {}
 
-  // Esempio di funzione per aggiungere dati
-  addItem() {
-    const item = { name: 'Sample Item', created: new Date() };
-    this.firestore.collection('items').add(item).then(() => {
-      console.log('Item aggiunto con successo!');
-    });
-  }
-
-  // Esempio di funzione per leggere dati
-  getItems() {
-    this.firestore.collection('items').snapshotChanges().subscribe(data => {
-      data.forEach(item => {
-        console.log(item.payload.doc.data());
-      });
-    });
-  }
 
   async ngOnInit() {
     this.loadActivities();
@@ -68,6 +72,7 @@ savedTimes: string[] = [];
     this.platform.pause.subscribe(() => this.onAppBackground());
     this.platform.resume.subscribe(() => this.onAppForeground());
 
+
     LocalNotifications.addListener('localNotificationActionPerformed', (notification) => {
       console.log('Notifica cliccata:', notification);
       if (notification.notification.id === 1) {
@@ -76,15 +81,16 @@ savedTimes: string[] = [];
     });
 
     // Assicurati di avviare il servizio quando l'attività è in corso
-    if (this.isActivityStarted && this.currentActivity) {
-      this.startForegroundService();
-    }
+
   }
 
   async showSavedTimes() {
       // Recupera gli orari salvati dal servizio
       this.savedTimes = await this.activityService.getSavedTimes();
     }
+
+
+
 
   async removeTime(time: string) {
       await this.activityService.removeTime(time);
@@ -103,11 +109,14 @@ savedTimes: string[] = [];
     }
 
   async onAppBackground() {
-      if (this.isActivityStarted) {
-        console.log("App in background, avvio foreground service.");
-        await this.startForegroundService();
-      }
+    if (this.isActivityStarted) { // Cambiato a 'if (this.isActivityStarted)'
+      console.log("App in background, non avvio foreground service.");
+
+    } else {
+      console.log("App in background, l'attività non è iniziata. Non avvio il servizio.");
     }
+  }
+
 
   async onAppForeground() {
     console.log("App in primo piano, cancello la notifica persistente.");
@@ -139,10 +148,15 @@ savedTimes: string[] = [];
   // Avvia un'attività e richiede la geolocalizzazione
   async startActivity(activityType: string) {
     // Resetta i contatori e lo stato
+
     this.resetCounters();
 
     this.isActivityStarted = true;
     this.showBlinkingDot = true;
+
+    // Ferma il servizio se l'attività inizia
+     // Aggiungi questa linea
+
     this.currentActivity = {
       type: activityType,
       distance: 0,
@@ -211,15 +225,15 @@ savedTimes: string[] = [];
       this.startStepCounting();
     }
 
-    await this.startForegroundService();
+
 
     this.intervalId = setInterval(() => {
       this.elapsedTime = Math.floor((Date.now() - this.currentActivity.startTime.getTime()) / 1000);
       this.showBlinkingDot = !this.showBlinkingDot;
       this.updateActivityData();
-    }, 1000);
+    }, 20000);
 
-    await LocalNotifications.schedule({
+    /*await LocalNotifications.schedule({
       notifications: [
         {
           id: 1,
@@ -229,41 +243,45 @@ savedTimes: string[] = [];
           autoCancel: false,
         },
       ],
-    });
+    });*/
 
     console.log("Notifica persistente inviata.");
     this.activityService.startActivity(activityType);
   }
 
 async stopActivity() {
-    console.log("Fermando attività");
-    this.isActivityStarted = false;
+  console.log("Fermando attività");
+  this.isActivityStarted = false;
 
-    if (this.intervalId) {
-        clearInterval(this.intervalId);
-        this.intervalId = null;
-    }
+  if (this.intervalId) {
+    clearInterval(this.intervalId);
+    this.intervalId = null;
+  }
 
-    this.showBlinkingDot = false;
+  this.showBlinkingDot = false;
 
-    // Assicurati che tutti i dati siano raccolti prima di impostare `currentActivity` a null
-    const activity = {
-        id: await this.activityService.getNextId(), // Genera un ID incrementale univoco
-        type: this.currentActivity?.type,
-        startTime: this.currentActivity?.startTime,
-        endTime: new Date(),
-        distance: this.distance || 0,
-        calories: this.calories || 0,
-        duration: this.formatTime(this.elapsedTime),
-        steps: this.steps || 0,
-    };
+  // Assicurati che tutti i dati siano raccolti prima di impostare `currentActivity` a null
+  const activity = {
+    id: await this.activityService.getNextId(),
+    type: this.currentActivity?.type,
+    startTime: this.currentActivity?.startTime,
+    endTime: new Date(),
+    distance: this.distance || 0,
+    calories: this.calories || 0,
+    duration: this.formatTime(this.elapsedTime),
+    steps: this.steps || 0,
+  };
 
-    await this.activityService.saveActivity(activity); // Salva in un unico punto
+  await this.activityService.saveActivity(activity); // Salva in un unico punto
 
-    this.resetCounters();
-    this.currentActivity = null; // Resetta l'attività corrente
-    await this.loadActivities(); // Aggiorna la lista delle attività salvate
+  this.resetCounters();
+  this.currentActivity = null; // Resetta l'attività corrente
+  await this.loadActivities(); // Aggiorna la lista delle attività salvate
+
+  // Riavvia il servizio ora che l'attività è finita
+   // Aggiungi questa linea
 }
+
 
 
   formatTime(seconds: number) {
@@ -333,20 +351,8 @@ calculateCalories(steps: number, weight: number): number {
   }
 
 
-  async startForegroundService() {
-    if (Capacitor.getPlatform() === 'android') {
-      await LocalNotifications.schedule({
-        notifications: [
-          {
-            id: 1,
-            title: "Attività in corso",
-            body: "L'attività è ancora in esecuzione in background.",
-            ongoing: true,
-          },
-        ],
-      });
-    }
-  }
+
+
 
 
 goToHome() {
