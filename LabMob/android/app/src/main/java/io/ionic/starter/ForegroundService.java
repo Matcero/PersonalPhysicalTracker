@@ -30,7 +30,7 @@ public class ForegroundService extends Service {
       @Override
       public void run() {
         sendNotification();
-        handler.postDelayed(this, 20000); // 20 secondi
+        handler.postDelayed(this, 120000); // 20 secondi
       }
     };
     handler.post(runnable); // Avvia il runnable
