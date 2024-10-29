@@ -29,6 +29,8 @@ public class MainActivity extends BridgeActivity {
     PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
     wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyApp::MyWakelockTag");
     wakeLock.acquire();
+
+    startForegroundService();
   }
 
   private void requestIgnoreBatteryOptimizations() {
