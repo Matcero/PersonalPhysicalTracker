@@ -81,6 +81,30 @@
           </ion-label>
         </ion-item>
       </ion-list>
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Remainder Attività</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <div style="display: flex; align-items: center;">
+            <!-- Visualizzazione dell'orario impostato -->
+            <p style="font-size: 24px; margin-right: 10px;">{{ customTime }}</p>
+
+            <!-- Campo input per selezionare solo l'orario -->
+            <input
+              type="time"
+              [(ngModel)]="customTime"
+              (change)="setCustomTime($event)"
+              style="margin-right: 10px;"
+            />
+
+            <!-- Pulsante per confermare l'orario -->
+            <ion-button (click)="setCustomTime(customTime)">Setta Orario</ion-button>
+          </div>
+        </ion-card-content>
+      </ion-card>
+
+
 
       <!-- Mappa -->
       <div id="map" style="height: 50%; width: 50%;"></div>

@@ -18,6 +18,8 @@ const { App } = Plugins;
   styleUrls: ['./home.page.scss'],
 })
 export class HomePage implements OnInit {
+  customTime: string = '00:00'; // Orario impostabile manualmente, inizializzato a mezzanotte
+   selectedTime: string = '12:00'; // Orario di default visualizzato all'avvio
 
   activityHistory: any[] = [];
   map!: GoogleMap;
@@ -77,6 +79,10 @@ export class HomePage implements OnInit {
       this.startForegroundService();
     }
   }
+
+  setCustomTime(event: any) {
+      this.customTime = event.target.value; // Aggiorna l'orario personalizzato
+    }
 
   setupPlatformListeners() {
       this.platform.pause.subscribe(() => this.onAppBackground());
