@@ -1,6 +1,4 @@
-/// <reference types="@types/google.maps" />
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; // Importa ChangeDetectorRef
-import { GoogleMap } from '@capacitor/google-maps';
 import { ActivityService } from '../services/activity.service';
 import { Router } from '@angular/router';
 import { Geolocation } from '@capacitor/geolocation';
@@ -20,12 +18,8 @@ const { App } = Plugins;
   styleUrls: ['./home.page.scss'],
 })
 export class HomePage implements OnInit {
-  customTime: string = '00:00'; // Orario impostabile manualmente, inizializzato a mezzanotte
    isPeriodicNotificationEnabled: boolean = false;
-   selectedTime: string = '12:00'; // Orario di default visualizzato all'avvio
-savedTimes: string[] = [];
   activityHistory: any[] = [];
-  map!: GoogleMap;
   intervalId: any;
   isActivityStarted: boolean = false;
   currentActivity: any = null;
@@ -47,22 +41,6 @@ savedTimes: string[] = [];
     private cdr: ChangeDetectorRef // Aggiungi ChangeDetectorRef al costruttore
   ) {}
 
-  // Esempio di funzione per aggiungere dati
-  addItem() {
-    const item = { name: 'Sample Item', created: new Date() };
-    this.firestore.collection('items').add(item).then(() => {
-      console.log('Item aggiunto con successo!');
-    });
-  }
-
-  // Esempio di funzione per leggere dati
-  getItems() {
-    this.firestore.collection('items').snapshotChanges().subscribe(data => {
-      data.forEach(item => {
-        console.log(item.payload.doc.data());
-      });
-    });
-  }
 
   async ngOnInit() {
      App['addListener']('appOnStart', async () => {
@@ -77,8 +55,6 @@ savedTimes: string[] = [];
 
 
     this.loadActivities();
-    this.savedTimes = await this.activityService.getSavedTimes();
-    this.createMap();
     this.setupPlatformListeners();
     this.platform.pause.subscribe(() => this.onAppBackground());
     this.platform.resume.subscribe(() => this.onAppForeground());
@@ -95,22 +71,6 @@ savedTimes: string[] = [];
       this.startForegroundService();
     }*/
   }
-
-  async showSavedTimes() {
-      // Recupera gli orari salvati dal servizio
-      this.savedTimes = await this.activityService.getSavedTimes();
-    }
-
-  async removeTime(time: string) {
-      await this.activityService.removeTime(time);
-      // Aggiorna la lista degli orari salvati
-      this.savedTimes = await this.activityService.getSavedTimes();
-    }
-
-
-  setCustomTime() {
-      this.activityService.saveTime(this.customTime); // Salva l'orario impostato
-    }
 
   setupPlatformListeners() {
       this.platform.pause.subscribe(() => this.onAppBackground());
@@ -129,21 +89,6 @@ savedTimes: string[] = [];
     await LocalNotifications.cancel({ notifications: [{ id: 1 }] });
   }
 
-  async createMap() {
-    const mapElement = document.getElementById('map');
-    if (mapElement) {
-      this.map = await GoogleMap.create({
-        id: 'my-map',
-        element: mapElement,
-        apiKey: 'AIzaSyCBIR0J-OcK2q_QxzsrzB73PlYucVopYz0',
-        config: {
-          center: { lat: 37.7749, lng: -122.4194 },
-          zoom: 8,
-        },
-      });
-      console.log("Mappa creata.");
-    }
-  }
 
   // Funzione per controllare i permessi delle notifiche
   async checkNotificationPermissions(): Promise<boolean> {
@@ -256,14 +201,12 @@ savedTimes: string[] = [];
 async stopActivity() {
     console.log("Fermando attività");
     this.isActivityStarted = false;
-    //QUAAAAAAAAAAAAAAAAAA
-    //this.isPeriodicNotificationEnabled = true;
 
+        await this.stopForegroundService();
     if (this.intervalId) {
         clearInterval(this.intervalId);
         this.intervalId = null;
     }
-
     this.showBlinkingDot = false;
 
     // Assicurati che tutti i dati siano raccolti prima di impostare `currentActivity` a null

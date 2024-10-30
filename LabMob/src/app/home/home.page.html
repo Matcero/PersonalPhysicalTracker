@@ -89,51 +89,7 @@
           </ion-label>
         </ion-item>
       </ion-list>
-      <ion-card>
-        <ion-card-header>
-          <ion-card-title>Orologio Personalizzato</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <div style="display: flex; align-items: center;">
-            <!-- Visualizzazione dell'orario impostato -->
-            <p style="font-size: 24px; margin-right: 10px;">{{ customTime }}</p>
-
-            <!-- Campo input per selezionare solo l'orario -->
-            <input
-              type="time"
-              [(ngModel)]="customTime"
-              style="margin-right: 10px;"
-            />
-
-            <!-- Pulsante per confermare l'orario -->
-            <ion-button (click)="setCustomTime()">Setta Orario</ion-button>
-          </div>
-
-          <!-- Nuovo pulsante rosso "Mostra Orari" sotto "Setta Orario" -->
-          <ion-button color="danger" (click)="showSavedTimes()">Mostra Orari</ion-button>
-          <ion-list>
-            <ion-item *ngFor="let time of savedTimes">
-              <ion-label>{{ time }}</ion-label>
-              <ion-icon
-                name="close-outline"
-                color="danger"
-                (click)="removeTime(time)"
-                style="cursor: pointer;">
-              </ion-icon>
-            </ion-item>
-          </ion-list>
-
-        </ion-card-content>
-      </ion-card>
-
-
-
-
-
-      <!-- Mappa -->
-      <div id="map" style="height: 50%; width: 50%;"></div>
     </ion-content>
-
     <!-- Barra di navigazione in basso -->
     <ion-footer>
       <ion-toolbar>
@@ -164,3 +120,4 @@
     </ion-footer>
   </div>
 </ion-app>
+
