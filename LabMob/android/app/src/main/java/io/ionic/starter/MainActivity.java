@@ -81,6 +81,7 @@ public class MainActivity extends BridgeActivity {
   @Override
   public void onDestroy() {
     super.onDestroy();
+    this.getBridge().triggerWindowJSEvent("appOnStop");
     if (wakeLock != null && wakeLock.isHeld()) {
       wakeLock.release();
     }

@@ -8,6 +8,7 @@ import { AngularFirestore, AngularFirestoreDocument } from '@angular/fire/compat
 import firebase from 'firebase/compat/app'; // Questo import serve per accedere a FieldValue
 import { FirestoreService } from '../services/firestore.service';
 import { ActivityService } from '../services/activity.service';
+import { AlertController } from '@ionic/angular';
 
 interface User {
   uid: string;
@@ -35,11 +36,32 @@ export class CommunityPage implements OnInit {
   password: string = '';
 
   // Inietta Firestore nel costruttore
-  constructor(private afAuth: AngularFireAuth, private firestore: AngularFirestore, private router: Router, private firestoreService: FirestoreService, private activityService: ActivityService) {}
+  constructor(private alertController: AlertController, private afAuth: AngularFireAuth, private firestore: AngularFirestore, private router: Router, private firestoreService: FirestoreService, private activityService: ActivityService) {}
 
 async onUploadButtonClick() {
-  this.uploadMessage = await this.firestoreService.uploadUserActivity();
-  console.log(this.uploadMessage);  // Stampa il messaggio di upload
+  // Chiede conferma prima di eseguire l'upload
+  const alert = await this.alertController.create({
+    header: 'Conferma invio',
+    message: 'Sicuro di inviare le attività? Non si torna indietro',
+    buttons: [
+      {
+        text: 'No',
+        role: 'cancel',
+        handler: () => {
+          console.log('Upload annullato');
+        }
+      },
+      {
+        text: 'Sì',
+        handler: async () => {
+          this.uploadMessage = await this.firestoreService.uploadUserActivity();
+          console.log(this.uploadMessage);  // Stampa il messaggio di upload
+        }
+      }
+    ]
+  });
+
+  await alert.present();
 }
 
 
