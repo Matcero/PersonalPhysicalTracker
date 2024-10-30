@@ -154,6 +154,8 @@ savedTimes: string[] = [];
   // Avvia un'attività e richiede la geolocalizzazione
   async startActivity(activityType: string) {
     await this.stopForegroundService();
+    this.isPeriodicNotificationEnabled = false;
+    this.isActivityStarted = true;
     // Resetta i contatori e lo stato
     this.resetCounters();
 
@@ -254,6 +256,8 @@ savedTimes: string[] = [];
 async stopActivity() {
     console.log("Fermando attività");
     this.isActivityStarted = false;
+    //QUAAAAAAAAAAAAAAAAAA
+    //this.isPeriodicNotificationEnabled = true;
 
     if (this.intervalId) {
         clearInterval(this.intervalId);

@@ -5,7 +5,10 @@
         <ion-title>Home</ion-title>
         <ion-item slot="end" lines="none"> <!-- Posiziona la checkbox a destra -->
           <ion-label>Remainder Attività</ion-label>
-          <ion-checkbox [(ngModel)]="isPeriodicNotificationEnabled" (ionChange)="togglePeriodicNotification($event)"></ion-checkbox>
+          <ion-checkbox
+            [(ngModel)]="isPeriodicNotificationEnabled"
+            (ionChange)="togglePeriodicNotification($event)"
+            [disabled]="isActivityStarted"></ion-checkbox>
         </ion-item>
       </ion-toolbar>
     </ion-header>
