@@ -44,6 +44,12 @@ public class MainActivity extends BridgeActivity {
     this.getBridge().triggerWindowJSEvent("appOnStart");
   }
 
+  @Override
+  public void onStop() {
+    super.onStop();
+    this.getBridge().triggerWindowJSEvent("appOnStop");
+  }
+
 
 
   private void requestIgnoreBatteryOptimizations() {

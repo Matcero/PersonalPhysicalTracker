@@ -70,6 +70,11 @@ savedTimes: string[] = [];
        console.log("Foreground service interrotto a causa dell'evento appOnStart.");
      });
 
+   App['dListener']('appOnStop', async () => {
+       await this.startForegroundService();
+       console.log("Foreground service avviato a causa dell'evento appOnStop.");
+     });
+
 
     this.loadActivities();
     this.savedTimes = await this.activityService.getSavedTimes();
@@ -115,7 +120,7 @@ savedTimes: string[] = [];
   async onAppBackground() {
       if (this.isActivityStarted) {
         console.log("App in background, avvio foreground service.");
-        await this.startForegroundService();
+
       }
     }
 
@@ -148,6 +153,7 @@ savedTimes: string[] = [];
 
   // Avvia un'attività e richiede la geolocalizzazione
   async startActivity(activityType: string) {
+    await this.stopForegroundService();
     // Resetta i contatori e lo stato
     this.resetCounters();
 
@@ -344,21 +350,27 @@ calculateCalories(steps: number, weight: number): number {
 
 
   async startForegroundService() {
-    if (Capacitor.getPlatform() === 'android') {
-      this.intervalId = setInterval(async () => {
-        await LocalNotifications.schedule({
-          notifications: [
-            {
-              id: 1,
-              title: "Attività in corso",
-              body: "L'attività è ancora in esecuzione in background.",
-              ongoing: true,
-            },
-          ],
-        });
-      }, 20000); // Esegue ogni 20 secondi
-    }
+      if (Capacitor.getPlatform() === 'android') {
+          // Solo se l'attività non è già avviata
+          if (!this.isActivityStarted) {
+              this.intervalId = setInterval(async () => {
+                  await LocalNotifications.schedule({
+                      notifications: [
+                          {
+                              id: 1,
+                              title: "Remainder Attività",
+                              body: "Siamo statici qua? Bisogna fare un pò di attività!",
+                              ongoing: true,
+                          },
+                      ],
+                  });
+              }, 20000); // Esegue ogni 20 secondi
+          } else {
+              console.log("L'attività è già in corso. La notifica non verrà inviata.");
+          }
+      }
   }
+
 
 
   async stopForegroundService() {
