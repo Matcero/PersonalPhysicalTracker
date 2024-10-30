@@ -12,6 +12,8 @@ import { Motion } from '@capacitor/motion';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 const { App } = Plugins;
 
+
+
 @Component({
   selector: 'app-home',
   templateUrl: './home.page.html',
@@ -24,9 +26,10 @@ export class HomePage implements OnInit {
 savedTimes: string[] = [];
   activityHistory: any[] = [];
   map!: GoogleMap;
+  intervalId: any;
   isActivityStarted: boolean = false;
   currentActivity: any = null;
-  intervalId: any = null;
+
   elapsedTime: number = 0;
   lastAcceleration: { x: number, y: number, z: number } | null = { x: 0, y: 0, z: 0 };
   showBlinkingDot: boolean = false;
@@ -62,6 +65,12 @@ savedTimes: string[] = [];
   }
 
   async ngOnInit() {
+     App['addListener']('appOnStart', async () => {
+       await this.stopForegroundService();
+       console.log("Foreground service interrotto a causa dell'evento appOnStart.");
+     });
+
+
     this.loadActivities();
     this.savedTimes = await this.activityService.getSavedTimes();
     this.createMap();
@@ -77,9 +86,9 @@ savedTimes: string[] = [];
     });
 
     // Assicurati di avviare il servizio quando l'attività è in corso
-    if (this.isActivityStarted && this.currentActivity) {
+    /*if (this.isActivityStarted && this.currentActivity) {
       this.startForegroundService();
-    }
+    }*/
   }
 
   async showSavedTimes() {
@@ -212,7 +221,7 @@ savedTimes: string[] = [];
       this.startStepCounting();
     }
 
-    await this.startForegroundService();
+    //await this.startForegroundService();
 
     this.intervalId = setInterval(() => {
       this.elapsedTime = Math.floor((Date.now() - this.currentActivity.startTime.getTime()) / 1000);
@@ -336,26 +345,36 @@ calculateCalories(steps: number, weight: number): number {
 
   async startForegroundService() {
     if (Capacitor.getPlatform() === 'android') {
-      await LocalNotifications.schedule({
-        notifications: [
-          {
-            id: 1,
-            title: "Attività in corso",
-            body: "L'attività è ancora in esecuzione in background.",
-            ongoing: true,
-          },
-        ],
-      });
+      this.intervalId = setInterval(async () => {
+        await LocalNotifications.schedule({
+          notifications: [
+            {
+              id: 1,
+              title: "Attività in corso",
+              body: "L'attività è ancora in esecuzione in background.",
+              ongoing: true,
+            },
+          ],
+        });
+      }, 20000); // Esegue ogni 20 secondi
     }
   }
 
+
   async stopForegroundService() {
     if (Capacitor.getPlatform() === 'android') {
-      // Cancella la notifica persistente utilizzando LocalNotifications
+      // Cancella la notifica persistente
       await LocalNotifications.cancel({ notifications: [{ id: 1 }] });
       console.log("Notifica persistente rimossa e foreground service fermato.");
+
+      // Interrompe il ciclo di notifiche
+      if (this.intervalId) {
+        clearInterval(this.intervalId);
+        this.intervalId = null;
+      }
     }
   }
+
 
   togglePeriodicNotification(event: any) {
       this.isPeriodicNotificationEnabled = event.detail.checked;
