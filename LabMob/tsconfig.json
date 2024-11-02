@@ -22,7 +22,10 @@
       "es2018",
       "dom"
     ],
-    "types": ["@types/google.maps"],
+    "types": ["@types/google.maps",
+      "node",
+      "@capacitor/core",
+      "@capacitor/motion"],
     "useDefineForClassFields": false
   },
   "angularCompilerOptions": {

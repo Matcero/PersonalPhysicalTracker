@@ -8,14 +8,11 @@ import android.os.PowerManager;
 import android.provider.Settings;
 import android.net.Uri;
 import androidx.annotation.Nullable;
-import com.getcapacitor.Bridge;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
-import com.getcapacitor.JSObject;
 import com.getcapacitor.annotation.CapacitorPlugin;
-
 import io.ionic.backgroundrunner.plugin.BackgroundRunnerPlugin;
 
 @CapacitorPlugin(name = "App")
@@ -49,7 +46,6 @@ public class MainActivity extends BridgeActivity {
     super.onStop();
     this.getBridge().triggerWindowJSEvent("appOnStop");
   }
-
 
 
   private void requestIgnoreBatteryOptimizations() {

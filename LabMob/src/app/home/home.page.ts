@@ -1,15 +1,13 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; // Importa ChangeDetectorRef
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ActivityService } from '../services/activity.service';
 import { Router } from '@angular/router';
-import { Geolocation } from '@capacitor/geolocation';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Platform } from '@ionic/angular';
-import { Plugins } from '@capacitor/core';
-import { Motion } from '@capacitor/motion';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
-const { App } = Plugins;
-
+import { Plugins } from '@capacitor/core';
+import { Motion, AccelListenerEvent } from '@capacitor/motion';
+const { App, Device } = Plugins;
 
 
 @Component({
@@ -18,27 +16,27 @@ const { App } = Plugins;
   styleUrls: ['./home.page.scss'],
 })
 export class HomePage implements OnInit {
-   isPeriodicNotificationEnabled: boolean = false;
+  isPeriodicNotificationEnabled: boolean = false;
   activityHistory: any[] = [];
   intervalId: any;
   isActivityStarted: boolean = false;
-  currentActivity: any = null;
-
+  currentActivity: any = {};
   elapsedTime: number = 0;
-  lastAcceleration: { x: number, y: number, z: number } | null = { x: 0, y: 0, z: 0 };
+  timerInterval: any;
   showBlinkingDot: boolean = false;
   steps: number = 0;
   distance: number = 0; // Distance in kilometers
   calories: number = 0; // Calories burned
   stepLength: number = 0.00078; // Average step length in kilometers (approx. 0.78 meters)
   weight: number = 70; // User's weight in kg (adjust this value)
+  lastAcceleration: { x: number, y: number, z: number } | null = { x: 0, y: 0, z: 0 };
 
   constructor(
     private activityService: ActivityService,
     private router: Router,
     private platform: Platform,
     private firestore: AngularFirestore,
-    private cdr: ChangeDetectorRef // Aggiungi ChangeDetectorRef al costruttore
+    private cdr: ChangeDetectorRef
   ) {}
 
 
@@ -52,12 +50,9 @@ export class HomePage implements OnInit {
        await this.startForegroundService();
        console.log("Foreground service avviato a causa dell'evento appOnStop.");
      });
-
-
     this.loadActivities();
     this.setupPlatformListeners();
-    this.platform.pause.subscribe(() => this.onAppBackground());
-    this.platform.resume.subscribe(() => this.onAppForeground());
+    this.setupAccelerometer();
 
     LocalNotifications.addListener('localNotificationActionPerformed', (notification) => {
       console.log('Notifica cliccata:', notification);
@@ -65,12 +60,39 @@ export class HomePage implements OnInit {
         this.router.navigate(['/home']);
       }
     });
-
-    // Assicurati di avviare il servizio quando l'attività è in corso
-    /*if (this.isActivityStarted && this.currentActivity) {
-      this.startForegroundService();
-    }*/
   }
+
+  setupAccelerometer() {
+    Device['getInfo']().then((info: any) => {
+      if (info.platform === 'android' || info.platform === 'ios') {
+        Motion.addListener('accel', (event: AccelListenerEvent) => { // Use AccelListenerEvent here
+          this.handleAcceleration(event);
+        }).catch((error: any) => {
+          console.error('Error adding listener for acceleration:', error);
+        });
+      }
+    });
+  }
+
+   handleAcceleration(event: AccelListenerEvent) {
+       if (this.isActivityStarted && this.currentActivity.type === 'walking' || this.currentActivity.type === 'sport') {
+         // Process the acceleration data
+         const threshold = 3.0; // Adjust this value based on testing
+
+         if (this.lastAcceleration && (
+             Math.abs(event.acceleration.x - this.lastAcceleration.x) > threshold ||
+             Math.abs(event.acceleration.y - this.lastAcceleration.y) > threshold ||
+             Math.abs(event.acceleration.z - this.lastAcceleration.z) > threshold)) {
+             // Incrementa i passi e calcola calorie e distanza
+                       this.steps++;
+                         this.distance = this.steps * this.stepLength;
+                         this.calories = this.calculateCalories(this.steps);
+                         this.cdr.detectChanges();
+             }
+         // Update lastAcceleration
+         this.lastAcceleration = { x: event.acceleration.x, y: event.acceleration.y, z: event.acceleration.z }; // Use acceleration properties
+       }
+     }
 
   setupPlatformListeners() {
       this.platform.pause.subscribe(() => this.onAppBackground());
@@ -79,8 +101,7 @@ export class HomePage implements OnInit {
 
   async onAppBackground() {
       if (this.isActivityStarted) {
-        console.log("App in background, avvio foreground service.");
-
+      this.startForegroundService();
       }
     }
 
@@ -89,147 +110,114 @@ export class HomePage implements OnInit {
     await LocalNotifications.cancel({ notifications: [{ id: 1 }] });
   }
 
-
-  // Funzione per controllare i permessi delle notifiche
-  async checkNotificationPermissions(): Promise<boolean> {
-    const permission = await LocalNotifications.requestPermissions();
-    return permission.display === 'granted';
-  }
-
   // Avvia un'attività e richiede la geolocalizzazione
   async startActivity(activityType: string) {
     await this.stopForegroundService();
     this.isPeriodicNotificationEnabled = false;
     this.isActivityStarted = true;
-    // Resetta i contatori e lo stato
     this.resetCounters();
 
-    this.isActivityStarted = true;
     this.showBlinkingDot = true;
     this.currentActivity = {
       type: activityType,
       distance: 0,
       calories: 0,
       startTime: new Date(),
-      startLocation: { lat: 0, lng: 0 },
     };
 
-    console.log("Avvio attività:", activityType);
-
-    // Verifica la piattaforma e la geolocalizzazione
-    if (Capacitor.getPlatform() === 'web') {
-      if ('geolocation' in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          async (position) => {
-            console.log('Posizione attuale dal browser:', position);
-            this.startTracking(activityType, position.coords.latitude, position.coords.longitude);
-          },
-          (error) => {
-            console.error('Errore nella geolocalizzazione del browser:', error);
-          }
-        );
-      } else {
-        console.log('Geolocalizzazione non supportata nel browser');
-      }
-      return;
+      this.startTimer();
+          switch (activityType) {
+      case 'walking':
+        this.steps = 0;
+        this.startWalking();
+        break;
+      case 'sport':
+        this.steps = 0;
+        this.startSport();
+        break;
+      default:
+        break;
     }
-
-    try {
-      const notificationGranted = await this.checkNotificationPermissions();
-      if (!notificationGranted) {
-        console.error('Permessi per le notifiche non concessi.');
-        return;
-      }
-
-      const geoPermission = await Geolocation.requestPermissions();
-      if (geoPermission.location === 'granted') {
-        const coordinates = await Geolocation.getCurrentPosition();
-        console.log('Posizione attuale:', coordinates);
-        this.startTracking(activityType, coordinates.coords.latitude, coordinates.coords.longitude);
-      } else {
-        console.log('Permesso di geolocalizzazione negato');
-      }
-    } catch (error) {
-      console.error('Errore durante la richiesta dei permessi o l\'ottenimento della posizione:', error);
-    }
-  }
-
-  async startTracking(activityType: string, lat: number, lng: number) {
-    this.isActivityStarted = true;
-    this.elapsedTime = 0;
-    this.showBlinkingDot = true;
-
-    this.currentActivity = {
-      type: activityType,
-      distance: 0,
-      calories: 0,
-      startTime: new Date(),
-      startLocation: {
-        lat: lat,
-        lng: lng,
-      },
-    };
-
-    if (activityType === 'walking') {
-      this.startStepCounting();
-    }
-
-    //await this.startForegroundService();
-
-    this.intervalId = setInterval(() => {
-      this.elapsedTime = Math.floor((Date.now() - this.currentActivity.startTime.getTime()) / 1000);
-      this.showBlinkingDot = !this.showBlinkingDot;
-      this.updateActivityData();
-    }, 1000);
-
-    await LocalNotifications.schedule({
-      notifications: [
-        {
+  await LocalNotifications.schedule({
+        notifications: [{
           id: 1,
           title: `Attività ${activityType} in corso`,
           body: `L'attività di ${activityType} è in corso`,
           ongoing: true,
           autoCancel: false,
-        },
-      ],
-    });
-
-    console.log("Notifica persistente inviata.");
-    this.activityService.startActivity(activityType);
+        }]
+      });
   }
 
-async stopActivity() {
-    console.log("Fermando attività");
-    this.isActivityStarted = false;
+ startTimer() {
+    this.elapsedTime = 0;
+    this.timerInterval = setInterval(() => this.elapsedTime++, 1000);
+  }
 
-        await this.stopForegroundService();
+ stopTimer() {
+    clearInterval(this.timerInterval);
+  }
+
+
+async startWalking() {
+    this.steps = 0;
+    this.lastAcceleration = { x: 0, y: 0, z: 0 };
+    this.setupAccelerometer();
+    console.log("Inizio camminata");
+}
+
+async startSport() {
+    this.steps = 0;
+    this.lastAcceleration = { x: 0, y: 0, z: 0 };
+    this.setupAccelerometer();
+    console.log("Inizio sport");
+}
+
+async stopActivity() {
+    this.isActivityStarted = false;
+    this.stopTimer();
+    await this.stopForegroundService();
     if (this.intervalId) {
         clearInterval(this.intervalId);
         this.intervalId = null;
     }
-    this.showBlinkingDot = false;
+   this.showBlinkingDot = false;
 
-    // Assicurati che tutti i dati siano raccolti prima di impostare `currentActivity` a null
-    const activity = {
-        id: await this.activityService.getNextId(), // Genera un ID incrementale univoco
-        type: this.currentActivity?.type,
-        startTime: this.currentActivity?.startTime,
-        endTime: new Date(),
-        distance: this.distance || 0,
-        calories: this.calories || 0,
-        duration: this.formatTime(this.elapsedTime),
-        steps: this.steps || 0,
-    };
+      const durationInSeconds = this.elapsedTime; // Durata già in secondi
+      let shouldSaveActivity = true; // Assume che l'attività debba essere salvata
 
-    await this.activityService.saveActivity(activity); // Salva in un unico punto
+      // Controlla se la durata è maggiore di 2 secondi
+      shouldSaveActivity &&= durationInSeconds > 2;
+
+      // Aggiungi condizione per 'walking' e 'sport'
+      if (this.currentActivity?.type === 'walking' || this.currentActivity?.type === 'sport') {
+          shouldSaveActivity &&= this.steps > 2; // Aggiungi condizione sui passi
+      }
+
+    // Salva solo se le condizioni sono soddisfatte
+    if (shouldSaveActivity) {
+        const activity = {
+            id: await this.activityService.getNextId(), // Genera un ID incrementale univoco
+            type: this.currentActivity?.type,
+            distance: this.distance,
+            calories: this.calories,
+            duration: this.formatTime(this.elapsedTime),
+            steps: this.steps,
+            date: this.currentActivity.startTime.toDateString(), // Giorno in cui è stata fatta l'attività
+            startTime: this.currentActivity?.startTime,
+            endTime: new Date(),
+        };
+       await this.activityService.saveActivity(activity); // Salva in un unico punto
+         } else {
+             console.log("Attività non salvata: durata insufficiente o passi insufficienti.");
+         }
 
     this.resetCounters();
-    this.currentActivity = null; // Resetta l'attività corrente
     await this.loadActivities(); // Aggiorna la lista delle attività salvate
 }
 
 
-  formatTime(seconds: number) {
+formatTime(seconds: number) {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const remainingSeconds = seconds % 60;
@@ -243,58 +231,18 @@ async stopActivity() {
     this.elapsedTime = 0;
   }
 
-  startStepCounting() {
-    let validMovementCount = 0;
-    Motion.removeAllListeners();
-    Motion.addListener('accel', (event: any) => {
-      const acceleration = event.accelerationIncludingGravity;
-
-      if (this.lastAcceleration) {
-        const deltaX = acceleration.x - this.lastAcceleration.x;
-        const deltaY = acceleration.y - this.lastAcceleration.y;
-        const deltaZ = acceleration.z - this.lastAcceleration.z;
-        const delta = Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
-
-        if (delta > 4.0) {
-          validMovementCount++;
-          if (validMovementCount >= 8) {
-            this.steps += 1;
-            validMovementCount = 0;
-           this.distance = parseFloat((this.steps * this.stepLength).toFixed(3)); // Distanza in km a 3 decimali
-           this.calories = parseFloat(this.calculateCalories(this.steps, this.weight).toFixed(3)); // Calorie a 3 decimali
-            this.cdr.detectChanges(); // Forza l'aggiornamento dell'interfaccia
-          }
-        }
-      }
-
-      this.lastAcceleration = acceleration;
-    });
-  }
-
-  stopStepCounting() {
-    Motion.removeAllListeners();
-  }
-
-calculateCalories(steps: number, weight: number): number {
-  const met = 3.8; // MET per camminata a ritmo moderato
-  const distanceKm = steps * this.stepLength; // Distanza in chilometri
-  const hours = distanceKm / 5; // Tempo approssimato basato su una velocità di camminata di 5 km/h
-  const calories = met * weight * hours;
-  return parseFloat(calories.toFixed(3)); // Ritorna il valore arrotondato a 3 decimali
+calculateCalories(steps: number): number {
+    const met = 3.5; // MET medio per la camminata
+    const stepLengthKm = 0.00078; // Lunghezza media del passo in km
+    const distanceKm = steps * stepLengthKm; // Calcola la distanza in km
+    const hours = distanceKm / 5; // Velocità media di camminata di 5 km/h
+  return parseFloat((met * this.weight * hours).toFixed(2)); // Limit to 2 decimal places
 }
 
 
   pad(value: number) {
     return value < 10 ? '0' + value : value;
   }
-
-  updateActivityData() {
-    console.log("Steps:", this.steps, "Distance:", this.distance, "Calories:", this.calories);
-    this.currentActivity.distance = this.distance;
-    this.currentActivity.calories = this.calories;
-    this.cdr.markForCheck(); // Usa markForCheck invece di detectChanges per aggiornamenti più leggeri
-  }
-
 
   async startForegroundService() {
       if (Capacitor.getPlatform() === 'android') {
@@ -318,14 +266,11 @@ calculateCalories(steps: number, weight: number): number {
       }
   }
 
-
-
   async stopForegroundService() {
     if (Capacitor.getPlatform() === 'android') {
       // Cancella la notifica persistente
       await LocalNotifications.cancel({ notifications: [{ id: 1 }] });
       console.log("Notifica persistente rimossa e foreground service fermato.");
-
       // Interrompe il ciclo di notifiche
       if (this.intervalId) {
         clearInterval(this.intervalId);
@@ -333,7 +278,6 @@ calculateCalories(steps: number, weight: number): number {
       }
     }
   }
-
 
   togglePeriodicNotification(event: any) {
       this.isPeriodicNotificationEnabled = event.detail.checked;
@@ -365,11 +309,8 @@ goToCommunity() {
 
 // Ricarica la cronologia attività per visualizzarla nella schermata
   async loadActivities() {
-    const history = await this.activityService.getActivityHistory();
-    // Qui aggiorni l'interfaccia con la cronologia attività
-    console.log("Cronologia attività:", history);
+        const history = await this.activityService.getActivityHistory();
+
   }
-
-
 
 }

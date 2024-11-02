@@ -32,19 +32,29 @@
           <ion-card-title>Attività in corso: {{ currentActivity.type }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
-          <p>Km: {{ currentActivity.distance }}</p>
-          <p>Kcalorie: {{ currentActivity.calories }}</p>
-
-          <!-- Mostra il cronometro con il punto lampeggiante -->
-          <p>
-            Tempo: {{ formatTime(elapsedTime) }}
-            <span *ngIf="showBlinkingDot" style="color: red;">•</span>
-          </p>
-
+          <!-- Cronometro e data -->
+          <p>Tempo: {{ formatTime(elapsedTime) }} <span *ngIf="showBlinkingDot" style="color: red;">•</span></p>
           <p>Data: {{ currentActivity.startTime | date:'shortDate' }}</p>
 
-          <!-- Mostra i passi solo se l'attività è "walking" -->
-          <p *ngIf="currentActivity.type === 'walking'">Passi: {{ steps }}</p>
+          <!-- Dettagli specifici per ogni attività -->
+          <ng-container [ngSwitch]="currentActivity.type">
+            <!-- Dati per Driving -->
+            <div *ngSwitchCase="'driving'">
+            </div>
+
+            <div *ngSwitchCase="'walking'">
+              <p>Passi: {{ steps }}</p>
+              <p>Kcal bruciate: {{ calories | number: '1.0-0' }}</p> <!-- Mostra le calorie con un formato intero -->
+              <p>Distanza: {{ distance | number: '1.2-2' }} km</p> <!-- Mostra la distanza con due decimali -->
+            </div>
+
+            <!-- Dati per Sport -->
+            <div *ngSwitchCase="'sport'">
+              <p>Passi: {{ steps }}</p>
+              <p>Kcal bruciate: {{ calories | number: '1.0-0' }}</p> <!-- Mostra le calorie con un formato intero -->
+              <p>Distanza: {{ distance | number: '1.2-2' }} km</p> <!-- Mostra la distanza con due decimali -->
+            </div>
+          </ng-container>
         </ion-card-content>
       </ion-card>
 
@@ -65,6 +75,10 @@
 
           <ion-button expand="block" color="warning" (click)="startActivity('sitting')">
             Inizia a stare seduto
+          </ion-button>
+
+          <ion-button expand="block" color="tertiary" (click)="startActivity('sport')">
+            Inizia attività sportiva
           </ion-button>
         </ion-card-content>
       </ion-card>

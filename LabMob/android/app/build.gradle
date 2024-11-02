@@ -32,7 +32,12 @@ repositories {
 }
 
 dependencies {
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
+  implementation("androidx.compose:compose-bom:2023.10.01")
+  implementation("androidx.activity:activity-compose")
+  implementation 'androidx.compose.foundation:foundation:1.0.5'
+  implementation 'androidx.compose.material:material:1.0.5'
+  implementation 'com.google.android.gms:play-services-location:21.3.0'
+  implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
