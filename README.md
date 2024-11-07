@@ -9,6 +9,7 @@ npm install @types/chart.js --save-dev
 ionic serve
  
 ionic build
+npx cap sync
 ionic capacitor sync
 ionic capacitor open android
 

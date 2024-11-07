@@ -8,7 +8,7 @@ import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { Plugins } from '@capacitor/core';
 import { Motion, AccelListenerEvent } from '@capacitor/motion';
 const { App, Device } = Plugins;
-
+import { NgZone } from '@angular/core';
 
 @Component({
   selector: 'app-home',
@@ -30,14 +30,18 @@ export class HomePage implements OnInit {
   stepLength: number = 0.00078; // Average step length in kilometers (approx. 0.78 meters)
   weight: number = 70; // User's weight in kg (adjust this value)
   lastAcceleration: { x: number, y: number, z: number } | null = { x: 0, y: 0, z: 0 };
+  motionListener: any; // Aggiungi questa dichiarazione
 
   constructor(
     private activityService: ActivityService,
     private router: Router,
     private platform: Platform,
     private firestore: AngularFirestore,
-    private cdr: ChangeDetectorRef
-  ) {}
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone,
+
+  ) {
+    }
 
 
   async ngOnInit() {
@@ -46,7 +50,7 @@ export class HomePage implements OnInit {
        console.log("Foreground service interrotto a causa dell'evento appOnStart.");
      });
 
-   App['dListener']('appOnStop', async () => {
+   App['addListener']('appOnStop', async () => {
        await this.startForegroundService();
        console.log("Foreground service avviato a causa dell'evento appOnStop.");
      });
@@ -60,12 +64,21 @@ export class HomePage implements OnInit {
         this.router.navigate(['/home']);
       }
     });
+
+    // Esegui aggiornamenti periodici dell'interfaccia ogni secondo
+    setInterval(() => {
+      if (this.isActivityStarted) {
+        this.ngZone.run(() => {
+          this.cdr.detectChanges();
+        });
+      }
+    }, 1000); // Esegue ogni secondo
   }
 
   setupAccelerometer() {
     Device['getInfo']().then((info: any) => {
       if (info.platform === 'android' || info.platform === 'ios') {
-        Motion.addListener('accel', (event: AccelListenerEvent) => { // Use AccelListenerEvent here
+        this.motionListener = Motion.addListener('accel', (event: AccelListenerEvent) => {
           this.handleAcceleration(event);
         }).catch((error: any) => {
           console.error('Error adding listener for acceleration:', error);
@@ -76,7 +89,6 @@ export class HomePage implements OnInit {
 
    handleAcceleration(event: AccelListenerEvent) {
        if (this.isActivityStarted && this.currentActivity.type === 'walking' || this.currentActivity.type === 'sport') {
-         // Process the acceleration data
          const threshold = 3.0; // Adjust this value based on testing
 
          if (this.lastAcceleration && (
@@ -87,7 +99,10 @@ export class HomePage implements OnInit {
                        this.steps++;
                          this.distance = this.steps * this.stepLength;
                          this.calories = this.calculateCalories(this.steps);
-                         this.cdr.detectChanges();
+
+                          this.ngZone.run(() => {
+                                this.cdr.detectChanges(); // Forza l'aggiornamento anche in background
+                              });
              }
          // Update lastAcceleration
          this.lastAcceleration = { x: event.acceleration.x, y: event.acceleration.y, z: event.acceleration.z }; // Use acceleration properties
@@ -106,6 +121,7 @@ export class HomePage implements OnInit {
     }
 
   async onAppForeground() {
+        await this.stopForegroundService();
     console.log("App in primo piano, cancello la notifica persistente.");
     await LocalNotifications.cancel({ notifications: [{ id: 1 }] });
   }
@@ -124,7 +140,7 @@ export class HomePage implements OnInit {
       calories: 0,
       startTime: new Date(),
     };
-
+      this.startForegroundService();
       this.startTimer();
           switch (activityType) {
       case 'walking':
@@ -260,6 +276,15 @@ calculateCalories(steps: number): number {
                       ],
                   });
               }, 20000); // Esegue ogni 20 secondi
+
+               if (!this.motionListener) {
+                      this.motionListener = Motion.addListener('accel', (event: AccelListenerEvent) => {
+                        this.handleAcceleration(event);
+                      }).catch((error: any) => {
+                        console.error('Errore nel listener per accelerazione:', error);
+                      });
+                    }
+
           } else {
               console.log("L'attività è già in corso. La notifica non verrà inviata.");
           }

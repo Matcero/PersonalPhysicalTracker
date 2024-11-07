@@ -6,14 +6,24 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.content.Context;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import android.util.Log;
 
-public class ForegroundService extends Service {
+
+public class ForegroundService extends Service implements SensorEventListener {
   private static final String CHANNEL_ID = "ForegroundServiceChannel";
+  private SensorManager sensorManager;
+  private Sensor stepSensor;
+  private int stepCount = 0;
   private Handler handler;
   private Runnable runnable;
 
@@ -24,16 +34,28 @@ public class ForegroundService extends Service {
     // Creazione del canale di notifica
     createNotificationChannel();
 
-    // Impostiamo un handler per inviare notifiche ogni 20 secondi
+    // Configurazione del sensore per il contapassi
+    sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+    if (sensorManager != null) {
+      stepSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
+      if (stepSensor != null) {
+        sensorManager.registerListener(this, stepSensor, SensorManager.SENSOR_DELAY_NORMAL);
+      }
+    }
+
+
+    // Imposta un handler per aggiornare le notifiche
     handler = new Handler();
     runnable = new Runnable() {
       @Override
       public void run() {
         sendNotification();
-        handler.postDelayed(this, 20000); // 20 secondi
+        handler.postDelayed(this, 20000); // Aggiorna ogni 20 secondi
       }
     };
+    handler.post(runnable);
   }
+
 
   private void sendNotification() {
     if (handler != null) {
@@ -84,6 +106,7 @@ public class ForegroundService extends Service {
     return START_STICKY; // Assicura che il servizio rimanga attivo
   }
 
+
   @Nullable
   @Override
   public IBinder onBind(Intent intent) {
@@ -93,6 +116,23 @@ public class ForegroundService extends Service {
   @Override
   public void onDestroy() {
     super.onDestroy();
-    handler.removeCallbacks(runnable); // Rimuovi il runnable quando il servizio viene distrutto
+    handler.removeCallbacks(runnable);
+    if (sensorManager != null) {
+      sensorManager.unregisterListener(this);
+    }
+  }
+
+  // Gestisci gli eventi del contapassi
+  @Override
+  public void onSensorChanged(SensorEvent event) {
+    if (event.sensor.getType() == Sensor.TYPE_STEP_COUNTER) {
+      stepCount = (int) event.values[0]; // Incrementa i passi
+      Log.d("ForegroundService", "Passi aggiornati: " + stepCount);
+    }
+  }
+
+  @Override
+  public void onAccuracyChanged(Sensor sensor, int accuracy) {
+    // Non necessario per ora
   }
 }
