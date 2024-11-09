@@ -22,6 +22,7 @@ import { NgZone } from '@angular/core';
 export class HomePage implements OnInit {
   geofenceCenter = { lat: 44.2833867, lng: 11.8813701 }; // Esempio di coordinate del geofence
   geofenceRadius = 100; // Raggio del geofence in metri
+geofenceModeActive: boolean = false; // Variabile per tracciare la modalità geofence
 
   isPeriodicNotificationEnabled: boolean = false;
   activityHistory: any[] = [];
@@ -183,54 +184,79 @@ export class HomePage implements OnInit {
   }
 
 
- async loadMap() {
-   const mapElement = document.getElementById('map') as HTMLElement;
-   if (!mapElement) {
-     console.error('Contenitore della mappa non trovato');
-     return;
-   }
 
-   // Ottieni la posizione attuale
-   const position = await Geolocation.getCurrentPosition();
-   const currentLat = position.coords.latitude;
-   const currentLng = position.coords.longitude;
-
-   // Crea la mappa centrata sulla posizione attuale
-   const map = await GoogleMap.create({
-     id: 'my-map', // ID univoco
-     element: mapElement, // Elemento DOM della mappa
-     apiKey: 'AIzaSyCBIR0J-OcK2q_QxzsrzB73PlYucVopYz0',
-     config: {
-       center: { lat: currentLat, lng: currentLng },
-       zoom: 15, // Zoom più vicino per la posizione attuale
-     }
-   });
-
-   // Aggiungi un marker sulla posizione attuale
-   await map.addMarker({
-     coordinate: { lat: currentLat, lng: currentLng },
-     title: 'La mia posizione',
-   });
-
-   // Aggiungi un marker al centro del geofence
-   await map.addMarker({
-     coordinate: this.geofenceCenter, // Usa il centro del geofence
-     title: 'Centro del geofence',
-     snippet: 'Questo è il centro del geofence.',
-   });
-
-   // Aggiungi un cerchio per rappresentare il geofence
-  await map.addCircles([{
-      center: this.geofenceCenter, // Il centro del cerchio (geofence)
-      radius: this.geofenceRadius, // Raggio in metri
-      strokeColor: '#FF0000', // Colore del bordo
-      fillColor: '#FF0000', // Colore di riempimento
-      fillOpacity: 0.3, // Opacità del riempimento
-    }]);
-
-
-   console.log('Mappa caricata, marker e cerchio del geofence aggiunti.');
+ activateGeofenceMode() {
+   this.geofenceModeActive = true;
+   console.log('Modalità Geofence attivata. Clicca sulla mappa per impostare il geofence.');
  }
+
+ // Carica la mappa e aggiungi il geofence
+   async loadMap() {
+     const mapElement = document.getElementById('map') as HTMLElement;
+     if (!mapElement) {
+       console.error('Contenitore della mappa non trovato');
+       return;
+     }
+
+     // Ottieni la posizione attuale
+     const position = await Geolocation.getCurrentPosition();
+     const currentLat = position.coords.latitude;
+     const currentLng = position.coords.longitude;
+
+     // Crea la mappa centrata sulla posizione attuale
+     const map = await GoogleMap.create({
+       id: 'my-map',
+       element: mapElement,
+       apiKey: 'AIzaSyCBIR0J-OcK2q_QxzsrzB73PlYucVopYz0',
+       config: {
+         center: { lat: currentLat, lng: currentLng },
+         zoom: 15,
+       }
+     });
+
+     // Aggiungi un marker per la posizione attuale
+     await map.addMarker({
+       coordinate: { lat: currentLat, lng: currentLng },
+       title: 'La mia posizione',
+     });
+
+     // Aggiungi un cerchio per il geofence attuale (se esiste)
+     if (this.geofenceCenter && this.geofenceRadius) {
+       await map.addCircles([{
+         center: this.geofenceCenter,
+         radius: this.geofenceRadius,
+         strokeColor: '#FF0000',
+         fillColor: '#FF0000',
+         fillOpacity: 0.3,
+       }]);
+     }
+
+     // Listener per aggiungere un geofence
+     map.setOnMapClickListener(async (event) => {
+       if (this.geofenceModeActive) {
+         // Definisci il nuovo geofence
+         this.geofenceCenter = { lat: event.latitude, lng: event.longitude };
+         this.geofenceRadius = 100; // Raggio predefinito
+
+         // Aggiungi un cerchio sulla mappa per il geofence appena creato
+         await map.addCircles([{
+           center: this.geofenceCenter,
+           radius: this.geofenceRadius,
+           strokeColor: '#00FF00',
+           fillColor: '#00FF00',
+           fillOpacity: 0.3,
+         }]);
+
+         // Salva il geofence in locale usando il servizio ActivityService
+         await this.activityService.saveGeofence({ lat: this.geofenceCenter.lat, lng: this.geofenceCenter.lng, radius: this.geofenceRadius });
+
+         console.log('Nuovo geofence aggiunto alle coordinate:', this.geofenceCenter);
+
+         // Disattiva la modalità geofence
+         this.geofenceModeActive = false;
+       }
+     });
+   }
 
 
 

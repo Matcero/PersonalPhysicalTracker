@@ -76,6 +76,25 @@ export class ActivityService {
     }
   }
 
+  // Salva i geofence nel dispositivo
+  async saveGeofence(geofence: {lat: number, lng: number, radius: number}) {
+    if (this._storage) {
+      let geofences = (await this._storage.get('geofences')) || [];
+      geofences.push(geofence);
+      await this._storage.set('geofences', geofences);
+      console.log('Geofence salvato:', geofence);
+    }
+  }
+
+  // Carica i geofence salvati
+  async loadGeofences(): Promise<{lat: number, lng: number, radius: number}[]> {
+    if (this._storage) {
+      const geofences = await this._storage.get('geofences') || [];
+      console.log('Geofences caricati:', geofences);
+      return geofences;
+    }
+    return [];
+  }
 
 
   // Avvia un'attività
