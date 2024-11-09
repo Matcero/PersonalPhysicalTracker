@@ -53,16 +53,20 @@ export class HomePage implements OnInit {
 
 
   async ngOnInit() {
-    this.monitorGeofence();
+    //this.monitorGeofence();
      setInterval(() => {
        this.monitorGeofence(); // Esegui monitoraggio ogni 10 secondi (ad esempio)
-     }, 10000); // 10 secondi
+     }, 30000); // 10 secondi
      this.loadMap();
      App['addListener']('appOnStart', async () => {
        await this.stopForegroundService();
        console.log("Foreground service interrotto a causa dell'evento appOnStart.");
      });
 
+   App['addListener']('appOnStop', async () => {
+          await this.monitorGeofence();
+          console.log("geofence control");
+        });
    App['addListener']('appOnStop', async () => {
        await this.startForegroundService();
        console.log("Foreground service avviato a causa dell'evento appOnStop.");
@@ -128,46 +132,56 @@ export class HomePage implements OnInit {
     }
 
   // Metodo per monitorare il geofence
+  // Metodo per monitorare il geofence
   async monitorGeofence() {
     try {
       const position = await Geolocation.getCurrentPosition();
-      const distance = this.calculateDistance(
-         this.geofenceCenter?.lat ?? 0,  // Fallback to 0 if null
-          this.geofenceCenter?.lng ?? 0,  // Fallback to 0 if null
-        position.coords.latitude,
-        position.coords.longitude
-      );
+      const geofences = await this.activityService.loadGeofences(); // Carica tutti i geofence salvati
 
-     if (distance <= this.geofenceRadius) {
-       console.log("L'utente è all'interno del geofence.");
-       // Invia una notifica che l'utente è entrato nel geofence
-       await LocalNotifications.schedule({
-         notifications: [{
-           id: 2,
-           title: "Entrato nel geofence",
-           body: "Sei entrato nell'area protetta.",
-           ongoing: false,
-           autoCancel: true,
-         }]
-       });
-     } else {
-       console.log("L'utente è all'esterno del geofence.");
-       // Invia una notifica che l'utente è fuori dal geofence
-       await LocalNotifications.schedule({
-         notifications: [{
-           id: 3,
-           title: "Uscito dal geofence",
-           body: "Hai lasciato l'area protetta.",
-           ongoing: false,
-           autoCancel: true,
-         }]
-       });
-     }
+      // Controlla per ogni geofence se l'utente è dentro o fuori
+      for (const geofence of geofences) {
+        const distance = this.calculateDistance(
+          geofence.lat,  // Latitudine del geofence
+          geofence.lng,  // Longitudine del geofence
+          position.coords.latitude,
+          position.coords.longitude
+        );
+
+        // Se la distanza è inferiore al raggio del geofence, l'utente è dentro
+        if (distance <= geofence.radius) {
+          console.log(`L'utente è all'interno del geofence con centro a (${geofence.lat}, ${geofence.lng}).`);
+          // Invia una notifica che l'utente è entrato nel geofence
+          await LocalNotifications.schedule({
+            notifications: [{
+              id: 2,
+              title: "Sei dentro ad un geofence",
+              body: `Sei entrato nell'area protetta con centro a (${geofence.lat}, ${geofence.lng}).`,
+              ongoing: false,
+              autoCancel: true,
+            }]
+          });
+
+        } else {
+          console.log(`L'utente è all'esterno del geofence con centro a (${geofence.lat}, ${geofence.lng}).`);
+
+          // Invia una notifica che l'utente è uscito dal geofence
+          /*await LocalNotifications.schedule({
+            notifications: [{
+              id: 3,
+              title: "Sei fuori dal geofence",
+              body: `Hai lasciato l'area protetta con centro a (${geofence.lat}, ${geofence.lng}).`,
+              ongoing: false,
+              autoCancel: true,
+            }]
+          });*/
+        }
+      }
 
     } catch (error) {
       console.error("Errore nel recupero della posizione", error);
     }
   }
+
 
 
   // Funzione di utilità per calcolare la distanza tra due punti geografici
