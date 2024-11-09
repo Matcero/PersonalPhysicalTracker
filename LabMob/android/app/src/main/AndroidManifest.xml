@@ -39,6 +39,7 @@
       android:foregroundServiceType="location|dataSync"
       android:enabled="true"
       android:exported="false" />
+    <receiver android:name=".GeofenceBroadcastReceiver"/>
 
   </application>
 

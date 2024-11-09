@@ -20,6 +20,9 @@ import { NgZone } from '@angular/core';
   styleUrls: ['./home.page.scss'],
 })
 export class HomePage implements OnInit {
+  geofenceCenter = { lat: 44.2833867, lng: 11.8813701 }; // Esempio di coordinate del geofence
+  geofenceRadius = 100; // Raggio del geofence in metri
+
   isPeriodicNotificationEnabled: boolean = false;
   activityHistory: any[] = [];
   intervalId: any;
@@ -49,6 +52,10 @@ export class HomePage implements OnInit {
 
 
   async ngOnInit() {
+    this.monitorGeofence();
+     setInterval(() => {
+       this.monitorGeofence(); // Esegui monitoraggio ogni 10 secondi (ad esempio)
+     }, 10000); // 10 secondi
      this.loadMap();
      App['addListener']('appOnStart', async () => {
        await this.stopForegroundService();
@@ -119,12 +126,69 @@ export class HomePage implements OnInit {
       this.platform.resume.subscribe(() => this.onAppForeground());
     }
 
+  // Metodo per monitorare il geofence
+  async monitorGeofence() {
+    try {
+      const position = await Geolocation.getCurrentPosition();
+      const distance = this.calculateDistance(
+        this.geofenceCenter.lat,
+        this.geofenceCenter.lng,
+        position.coords.latitude,
+        position.coords.longitude
+      );
+
+     if (distance <= this.geofenceRadius) {
+       console.log("L'utente è all'interno del geofence.");
+       // Invia una notifica che l'utente è entrato nel geofence
+       await LocalNotifications.schedule({
+         notifications: [{
+           id: 2,
+           title: "Entrato nel geofence",
+           body: "Sei entrato nell'area protetta.",
+           ongoing: false,
+           autoCancel: true,
+         }]
+       });
+     } else {
+       console.log("L'utente è all'esterno del geofence.");
+       // Invia una notifica che l'utente è fuori dal geofence
+       await LocalNotifications.schedule({
+         notifications: [{
+           id: 3,
+           title: "Uscito dal geofence",
+           body: "Hai lasciato l'area protetta.",
+           ongoing: false,
+           autoCancel: true,
+         }]
+       });
+     }
+
+    } catch (error) {
+      console.error("Errore nel recupero della posizione", error);
+    }
+  }
+
+
+  // Funzione di utilità per calcolare la distanza tra due punti geografici
+  calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const toRadians = (degrees: number) => degrees * (Math.PI / 180);
+    const earthRadius = 6371000; // Raggio della Terra in metri
+    const dLat = toRadians(lat2 - lat1);
+    const dLon = toRadians(lon2 - lon1);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return earthRadius * c;
+  }
+
+
  async loadMap() {
    const mapElement = document.getElementById('map') as HTMLElement;
-    if (!mapElement) {
-        console.error('Contenitore della mappa non trovato');
-        return;
-      }
+   if (!mapElement) {
+     console.error('Contenitore della mappa non trovato');
+     return;
+   }
 
    // Ottieni la posizione attuale
    const position = await Geolocation.getCurrentPosition();
@@ -148,8 +212,26 @@ export class HomePage implements OnInit {
      title: 'La mia posizione',
    });
 
-   console.log('Mappa caricata e marker aggiunto alla posizione attuale:', currentLat, currentLng);
+   // Aggiungi un marker al centro del geofence
+   await map.addMarker({
+     coordinate: this.geofenceCenter, // Usa il centro del geofence
+     title: 'Centro del geofence',
+     snippet: 'Questo è il centro del geofence.',
+   });
+
+   // Aggiungi un cerchio per rappresentare il geofence
+  await map.addCircles([{
+      center: this.geofenceCenter, // Il centro del cerchio (geofence)
+      radius: this.geofenceRadius, // Raggio in metri
+      strokeColor: '#FF0000', // Colore del bordo
+      fillColor: '#FF0000', // Colore di riempimento
+      fillOpacity: 0.3, // Opacità del riempimento
+    }]);
+
+
+   console.log('Mappa caricata, marker e cerchio del geofence aggiunti.');
  }
+
 
 
 
