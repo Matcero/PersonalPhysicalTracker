@@ -1,3 +1,4 @@
+/// <reference types="@types/google.maps" />
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ActivityService } from '../services/activity.service';
 import { Router } from '@angular/router';
@@ -7,6 +8,9 @@ import { Platform } from '@ionic/angular';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { Plugins } from '@capacitor/core';
 import { Motion, AccelListenerEvent } from '@capacitor/motion';
+import { GoogleMap } from '@capacitor/google-maps';
+import { Geolocation } from '@capacitor/geolocation';
+
 const { App, Device } = Plugins;
 import { NgZone } from '@angular/core';
 
@@ -45,6 +49,7 @@ export class HomePage implements OnInit {
 
 
   async ngOnInit() {
+     this.loadMap();
      App['addListener']('appOnStart', async () => {
        await this.stopForegroundService();
        console.log("Foreground service interrotto a causa dell'evento appOnStart.");
@@ -113,6 +118,40 @@ export class HomePage implements OnInit {
       this.platform.pause.subscribe(() => this.onAppBackground());
       this.platform.resume.subscribe(() => this.onAppForeground());
     }
+
+ async loadMap() {
+   const mapElement = document.getElementById('map') as HTMLElement;
+    if (!mapElement) {
+        console.error('Contenitore della mappa non trovato');
+        return;
+      }
+
+   // Ottieni la posizione attuale
+   const position = await Geolocation.getCurrentPosition();
+   const currentLat = position.coords.latitude;
+   const currentLng = position.coords.longitude;
+
+   // Crea la mappa centrata sulla posizione attuale
+   const map = await GoogleMap.create({
+     id: 'my-map', // ID univoco
+     element: mapElement, // Elemento DOM della mappa
+     apiKey: 'AIzaSyCBIR0J-OcK2q_QxzsrzB73PlYucVopYz0',
+     config: {
+       center: { lat: currentLat, lng: currentLng },
+       zoom: 15, // Zoom più vicino per la posizione attuale
+     }
+   });
+
+   // Aggiungi un marker sulla posizione attuale
+   await map.addMarker({
+     coordinate: { lat: currentLat, lng: currentLng },
+     title: 'La mia posizione',
+   });
+
+   console.log('Mappa caricata e marker aggiunto alla posizione attuale:', currentLat, currentLng);
+ }
+
+
 
   async onAppBackground() {
       if (this.isActivityStarted) {
