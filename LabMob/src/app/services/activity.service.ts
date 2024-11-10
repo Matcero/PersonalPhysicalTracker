@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Storage } from '@ionic/storage-angular';
-import { AngularFireAuth } from '@angular/fire/compat/auth'; // Importa AngularFireAuth qui
+import { AngularFireAuth } from '@angular/fire/compat/auth';
 
 
 @Injectable({
@@ -8,15 +8,15 @@ import { AngularFireAuth } from '@angular/fire/compat/auth'; // Importa AngularF
 })
 export class ActivityService {
   public _storage: Storage | null = null;
-  private currentId = 0; // Contatore per ID incrementale
-  public user: any; // Aggiungi una proprietà per l'utente corrente
+  private currentId = 0;
+  public user: any;
 
 
-  constructor(private storage: Storage, private afAuth: AngularFireAuth) { // Inietta lo storage
+  constructor(private storage: Storage, private afAuth: AngularFireAuth) {
     this.init();
     this.afAuth.authState.subscribe(user => {
           if (user) {
-            this.user = user; // Salva l'utente corrente
+            this.user = user;
           } else {
             this.user = null;
           }
@@ -24,7 +24,6 @@ export class ActivityService {
 
   }
 
-  // Inizializza lo storage e carica l'ultimo ID
     async init() {
       const storage = await this.storage.create();
       this._storage = storage;
@@ -33,14 +32,13 @@ export class ActivityService {
 
   async saveTime(time: string) {
     if (this._storage) {
-      // Ottiene l'elenco esistente degli orari salvati oppure crea un array vuoto
+      // Ottiene l'elenco esistente degli orari salvati
       let savedTimes = (await this._storage.get('savedTimes')) || [];
       savedTimes.push(time);
 
       // Salva l'elenco aggiornato nella memoria
       await this._storage.set('savedTimes', savedTimes);
 
-      // Logga l'elenco completo degli orari salvati
       console.log('Orari salvati:', savedTimes);
     }
   }
@@ -51,10 +49,8 @@ export class ActivityService {
       // Ottiene l'elenco esistente degli orari salvati
       const savedTimes = await this._storage.get('savedTimes') || [];
 
-      // Logga l'elenco degli orari salvati
       console.log('Orari salvati:', savedTimes);
 
-      // Restituisce l'elenco degli orari
       return savedTimes;
     }
     return [];
@@ -71,12 +67,11 @@ export class ActivityService {
       // Salva l'elenco aggiornato nella memoria
       await this._storage.set('savedTimes', savedTimes);
 
-      // Logga l'elenco aggiornato degli orari salvati
       console.log('Orari salvati dopo la rimozione:', savedTimes);
     }
   }
 
-  // Salva i geofence nel dispositivo
+  // Salva i geofence
   async saveGeofence(geofence: {lat: number, lng: number, radius: number}) {
     if (this._storage) {
       let geofences = (await this._storage.get('geofences')) || [];
@@ -87,26 +82,26 @@ export class ActivityService {
     }
   }
 
- // Carica i geofence salvati con ID
- async loadGeofences(): Promise<{id: number, lat: number, lng: number, radius: number}[]> {
-   if (this._storage) {
-     const geofences = await this._storage.get('geofences') || [];
-     console.log('Geofences caricati:', geofences);
-     return geofences;
+   // Carica i geofence salvati
+   async loadGeofences(): Promise<{id: number, lat: number, lng: number, radius: number}[]> {
+     if (this._storage) {
+       const geofences = await this._storage.get('geofences') || [];
+       console.log('Geofences caricati:', geofences);
+       return geofences;
+     }
+     return [];
    }
-   return [];
- }
 
-async deleteGeofence(index: number) {
-  if (this._storage) {
-    let geofences = await this._storage.get('geofences') || [];
-    if (index >= 0 && index < geofences.length) {
-      geofences.splice(index, 1); // Rimuove il geofence dall'array
-      await this._storage.set('geofences', geofences); // Salva l'array aggiornato
-      console.log('Geofence rimosso:', index);
+  async deleteGeofence(index: number) {
+    if (this._storage) {
+      let geofences = await this._storage.get('geofences') || [];
+      if (index >= 0 && index < geofences.length) {
+        geofences.splice(index, 1); // Rimuove il geofence dall'array
+        await this._storage.set('geofences', geofences); // Salva l'array aggiornato
+        console.log('Geofence rimosso:', index);
+      }
     }
   }
-}
 
   // Avvia un'attività
   async startActivity(activityType: string) {
@@ -149,24 +144,21 @@ async deleteGeofence(index: number) {
         return this._storage ? await this._storage.get('activityHistory') || [] : [];
       }
 
-    // Aggiungi il seguente metodo alla classe ActivityService
-async deleteActivity(activityId: number) {
-  if (this._storage) {
-    // Ottieni lo storico delle attività
-    let activityHistory = await this._storage.get('activityHistory') || [];
-    // Filtra per eliminare solo l'attività con l'ID specifico
-    activityHistory = activityHistory.filter((activity: any) => activity.id !== activityId);
-    // Aggiorna lo storico
-    await this._storage.set('activityHistory', activityHistory);
-  }
-}
 
-async getNextId() {
-    this.currentId++;
-    await this._storage?.set('lastActivityId', this.currentId);
-    return this.currentId;
-}
+    async deleteActivity(activityId: number) {
+      if (this._storage) {
+        let activityHistory = await this._storage.get('activityHistory') || [];
+        // Filtra per eliminare solo l'attività con l'ID specifico
+        activityHistory = activityHistory.filter((activity: any) => activity.id !== activityId);
+        // Aggiorna lo storico
+        await this._storage.set('activityHistory', activityHistory);
+      }
+    }
 
+    async getNextId() {
+        this.currentId++;
+        await this._storage?.set('lastActivityId', this.currentId);
+        return this.currentId;
+    }
 
-
-}
+ }

@@ -15,10 +15,11 @@
           <ion-select-option value="walking">Walking</ion-select-option>
           <ion-select-option value="driving">Driving</ion-select-option>
           <ion-select-option value="sitting">Sitting</ion-select-option>
+          <ion-select-option value="sport">Sport</ion-select-option>
         </ion-select>
       </ion-item>
 
-      <!-- Lista delle attività filtrate per data -->
+      <!-- Lista delle attività -->
       <div *ngFor="let group of filteredGroupedActivities">
         <ion-card>
           <ion-card-header>
@@ -50,7 +51,7 @@
       </div>
     </ion-content>
 
-    <!-- Barra di navigazione in basso -->
+
     <ion-footer>
       <ion-toolbar>
         <ion-tabs>

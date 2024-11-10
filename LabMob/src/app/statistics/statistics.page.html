@@ -13,7 +13,6 @@
             <ion-card-title>Statistiche delle Attività</ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            <!-- Aggiungi l'ion-select qui -->
             <ion-item *ngIf="isLoggedIn">
               <ion-label>Utente</ion-label>
               <ion-select [(ngModel)]="selectedUser" (ionChange)="onUserChange()">
@@ -29,7 +28,7 @@
                 {{ month }}
               </button>
             </div>
-            <canvas id="activityChart" style="margin-bottom: 50px;"></canvas> <!-- Aggiunto margine inferiore maggiore -->
+            <canvas id="activityChart" style="margin-bottom: 50px;"></canvas>
             <div class="chart-container">
               <div class="chart-wrapper">
                 <canvas id="stepsKilometersChart"></canvas>

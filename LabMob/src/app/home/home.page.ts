@@ -20,10 +20,10 @@ import { NgZone } from '@angular/core';
   styleUrls: ['./home.page.scss'],
 })
 export class HomePage implements OnInit {
-   isGeofenceListVisible: boolean = false;
+  isGeofenceListVisible: boolean = false;
   geofenceModeActive: boolean = false;
-    geofenceCenter: { lat: number, lng: number } | null = null;
-    geofenceRadius: number = 100; // Raggio predefinito di 100 metri
+  geofenceCenter: { lat: number, lng: number } | null = null;
+  geofenceRadius: number = 100;
   geofences: { lat: number, lng: number, radius: number }[] = [];
   isPeriodicNotificationEnabled: boolean = false;
   activityHistory: any[] = [];
@@ -34,12 +34,12 @@ export class HomePage implements OnInit {
   timerInterval: any;
   showBlinkingDot: boolean = false;
   steps: number = 0;
-  distance: number = 0; // Distance in kilometers
-  calories: number = 0; // Calories burned
-  stepLength: number = 0.00078; // Average step length in kilometers (approx. 0.78 meters)
-  weight: number = 70; // User's weight in kg (adjust this value)
+  distance: number = 0;
+  calories: number = 0;
+  stepLength: number = 0.00078;
+  weight: number = 70;
   lastAcceleration: { x: number, y: number, z: number } | null = { x: 0, y: 0, z: 0 };
-  motionListener: any; // Aggiungi questa dichiarazione
+  motionListener: any;
   positionWatchInterval: any;
   marker: any;
 
@@ -55,10 +55,10 @@ export class HomePage implements OnInit {
     }
 
   async ngOnInit() {
-    //this.monitorGeofence();
+
      setInterval(() => {
-       this.monitorGeofence(); // Esegui monitoraggio ogni 10 secondi (ad esempio)
-     }, 30000); // 10 secondi
+       this.monitorGeofence(); // Esegui controllo GeoFence ogni 30 secondi
+     }, 30000);
      this.loadMap();
      App['addListener']('appOnStart', async () => {
        await this.stopForegroundService();
@@ -67,7 +67,6 @@ export class HomePage implements OnInit {
 
    App['addListener']('appOnStart', async () => {
           await this.loadMap();
-
         });
 
    App['addListener']('appOnStop', async () => {
@@ -89,14 +88,14 @@ export class HomePage implements OnInit {
       }
     });
 
-    // Esegui aggiornamenti periodici dell'interfaccia ogni secondo
+    // Esegui aggiornamenti periodici dell'interfaccia
     setInterval(() => {
       if (this.isActivityStarted) {
         this.ngZone.run(() => {
           this.cdr.detectChanges();
         });
       }
-    }, 1000); // Esegue ogni secondo
+    }, 1000);
   }
 
   setupAccelerometer() {
@@ -116,7 +115,6 @@ export class HomePage implements OnInit {
     const maxVariation = threshold * 1.2;  // Fattore di tolleranza per ridurre la sensibilità
     const minVariation = threshold * 0.5;  // Fattore per ignorare movimenti troppo piccoli
 
-    // Controlla che le variazioni siano entro l'intervallo ragionevole per rappresentare un passo
     const isStepLikeMovement =
       (deltaX >= minVariation && deltaX <= maxVariation) &&
       (deltaY >= minVariation && deltaY <= maxVariation) &&
@@ -137,13 +135,11 @@ handleAcceleration(event: AccelListenerEvent) {
       const deltaY = Math.abs(event.acceleration.y - this.lastAcceleration.y);
       const deltaZ = Math.abs(event.acceleration.z - this.lastAcceleration.z);
 
-      // Usa il metodo personalizzato per verificare se i cambiamenti rappresentano un passo
       if (this.shouldIncrementSteps(deltaX, deltaY, deltaZ, threshold)) {
         this.steps++;
         this.distance = this.steps * this.stepLength;
         this.calories = this.calculateCalories(this.steps);
 
-        // Aggiorna l'interfaccia anche in background
         this.ngZone.run(() => {
           this.cdr.detectChanges();
         });
@@ -158,7 +154,6 @@ handleAcceleration(event: AccelListenerEvent) {
     };
   }
 }
-
 
 
   setupPlatformListeners() {
@@ -181,20 +176,20 @@ handleAcceleration(event: AccelListenerEvent) {
  async showGeofences() {
    this.isGeofenceListVisible = !this.isGeofenceListVisible;
 
-   // Carica i geofence solo se la lista deve essere mostrata
    if (this.isGeofenceListVisible) {
      this.geofences = await this.activityService.loadGeofences();
      console.log('Geofences caricati:', this.geofences);
    }
  }
 
-
   // Metodo per rimuovere un geofence
   async removeGeofence(index: number) {
     await this.activityService.deleteGeofence(index);
     this.geofences.splice(index, 1);
     console.log('Geofence rimosso');
-    this.ngOnInit();
+    this.loadMap();
+    this.isGeofenceListVisible = false;
+    location.reload();
   }
 
 
@@ -207,8 +202,8 @@ handleAcceleration(event: AccelListenerEvent) {
       // Controlla per ogni geofence se l'utente è dentro o fuori
       for (const geofence of geofences) {
         const distance = this.calculateDistance(
-          geofence.lat,  // Latitudine del geofence
-          geofence.lng,  // Longitudine del geofence
+          geofence.lat,
+          geofence.lng,
           position.coords.latitude,
           position.coords.longitude
         );
@@ -239,7 +234,7 @@ handleAcceleration(event: AccelListenerEvent) {
   // Funzione di utilità per calcolare la distanza tra due punti geografici
   calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
     const toRadians = (degrees: number) => degrees * (Math.PI / 180);
-    const earthRadius = 6371000; // Raggio della Terra in metri
+    const earthRadius = 6371000;
     const dLat = toRadians(lat2 - lat1);
     const dLon = toRadians(lon2 - lon1);
     const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
@@ -299,33 +294,31 @@ handleAcceleration(event: AccelListenerEvent) {
        }
        console.log('Geofences caricati sulla mappa:', geofences);
 
-       // Aggiungi la logica per aggiungere un nuovo geofence
+       // Logica per aggiungere un nuovo geofence
        map.setOnMapClickListener(async (event) => {
          if (this.geofenceModeActive) {
-           // Definisci il nuovo geofence
            this.geofenceCenter = { lat: event.latitude, lng: event.longitude };
-           this.geofenceRadius = 100; // Raggio predefinito
+           this.geofenceRadius = 100;
 
            // Aggiungi un cerchio sulla mappa per il geofence appena creato
            await map.addCircles([{
              center: this.geofenceCenter,
              radius: this.geofenceRadius,
-             strokeColor: '#00FF00',
-             fillColor: '#00FF00',
+             strokeColor: '#FF0000',
+             fillColor: '#FF0000',
              fillOpacity: 0.3,
           }]);
 
-           // Salva il geofence in locale usando il servizio ActivityService
+           // Salva il geofence in locale usando il servizio che si trova in ActivityService
            await this.activityService.saveGeofence({ lat: this.geofenceCenter.lat, lng: this.geofenceCenter.lng, radius: this.geofenceRadius });
            console.log('Nuovo geofence aggiunto alle coordinate:', this.geofenceCenter);
-           // Disattiva la modalità geofence
            this.geofenceModeActive = false;
          }
        });
 
 
 
-      // Aggiorna la posizione del marker ogni 2 secondi in base ai movimenti dell'utente
+      // Aggiorna la posizione del marker in base ai movimenti dell'utente
        this.positionWatchInterval = setInterval(async () => {
          try {
            // Ottieni la nuova posizione
@@ -344,7 +337,7 @@ handleAcceleration(event: AccelListenerEvent) {
          } catch (error) {
            console.error('Errore nel recupero della posizione durante l’aggiornamento', error);
          }
-       }, 20000); // Aggiorna ogni 2 secondi
+       }, 20000);
 
        // Ferma l'intervallo quando la pagina va in background
        this.platform.pause.subscribe(() => {
@@ -352,7 +345,7 @@ handleAcceleration(event: AccelListenerEvent) {
        });
      }
 
-  // Avvia un'attività e richiede la geolocalizzazione
+  // Avvia un'attività
   async startActivity(activityType: string) {
     await this.stopForegroundService();
     this.isPeriodicNotificationEnabled = false;
@@ -425,8 +418,8 @@ async stopActivity() {
     }
    this.showBlinkingDot = false;
 
-      const durationInSeconds = this.elapsedTime; // Durata già in secondi
-      let shouldSaveActivity = true; // Assume che l'attività debba essere salvata
+      const durationInSeconds = this.elapsedTime;
+      let shouldSaveActivity = true;
 
       // Controlla se la durata è maggiore di 2 secondi
       shouldSaveActivity &&= durationInSeconds > 2;
@@ -449,7 +442,7 @@ async stopActivity() {
             startTime: this.currentActivity?.startTime,
             endTime: new Date(),
         };
-       await this.activityService.saveActivity(activity); // Salva in un unico punto
+       await this.activityService.saveActivity(activity);
          } else {
              console.log("Attività non salvata: durata insufficiente o passi insufficienti.");
          }
@@ -474,11 +467,11 @@ formatTime(seconds: number) {
   }
 
 calculateCalories(steps: number): number {
-    const met = 3.5; // MET medio per la camminata
-    const stepLengthKm = 0.00078; // Lunghezza media del passo in km
-    const distanceKm = steps * stepLengthKm; // Calcola la distanza in km
-    const hours = distanceKm / 5; // Velocità media di camminata di 5 km/h
-  return parseFloat((met * this.weight * hours).toFixed(2)); // Limit to 2 decimal places
+    const met = 3.5;
+    const stepLengthKm = 0.00078;
+    const distanceKm = steps * stepLengthKm;
+    const hours = distanceKm / 5;
+  return parseFloat((met * this.weight * hours).toFixed(2));
 }
 
 
@@ -486,6 +479,7 @@ calculateCalories(steps: number): number {
     return value < 10 ? '0' + value : value;
   }
 
+  // Reminder sulla staticità dell'utente
   async startForegroundService() {
       if (Capacitor.getPlatform() === 'android') {
           // Solo se l'attività non è già avviata
@@ -501,7 +495,7 @@ calculateCalories(steps: number): number {
                           },
                       ],
                   });
-              }, 20000); // Esegue ogni 20 secondi
+              }, 20000);
 
                if (!this.motionListener) {
                       this.motionListener = Motion.addListener('accel', (event: AccelListenerEvent) => {
@@ -558,7 +552,6 @@ goToCommunity() {
   this.router.navigate(['/community']);
 }
 
-// Ricarica la cronologia attività per visualizzarla nella schermata
   async loadActivities() {
         const history = await this.activityService.getActivityHistory();
 

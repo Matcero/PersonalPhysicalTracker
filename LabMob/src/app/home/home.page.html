@@ -3,7 +3,7 @@
     <ion-header [translucent]="true">
       <ion-toolbar>
         <ion-title>Home</ion-title>
-        <ion-item slot="end" lines="none"> <!-- Posiziona la checkbox a destra -->
+        <ion-item slot="end" lines="none">
           <ion-label>Remainder Attività</ion-label>
           <ion-checkbox
             [(ngModel)]="isPeriodicNotificationEnabled"
@@ -15,20 +15,16 @@
 
 
     <ion-content [fullscreen]="true">
-
-      <!-- Se un'attività è avviata, mostra il riquadro -->
       <ion-card *ngIf="isActivityStarted">
         <ion-card-header>
           <ion-card-title>Attività in corso: {{ currentActivity.type }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
-          <!-- Cronometro e data -->
           <p>Tempo: {{ formatTime(elapsedTime) }} <span *ngIf="showBlinkingDot" style="color: red;">•</span></p>
           <p>Data: {{ currentActivity.startTime | date:'shortDate' }}</p>
 
           <!-- Dettagli specifici per ogni attività -->
           <ng-container [ngSwitch]="currentActivity.type">
-            <!-- Dati per Driving -->
             <div *ngSwitchCase="'driving'">
             </div>
 
@@ -38,17 +34,16 @@
               <p>Distanza: {{ distance | number: '1.2-2' }} km</p> <!-- Mostra la distanza con due decimali -->
             </div>
 
-            <!-- Dati per Sport -->
+
             <div *ngSwitchCase="'sport'">
               <p>Passi: {{ steps }}</p>
-              <p>Kcal bruciate: {{ calories | number: '1.0-0' }}</p> <!-- Mostra le calorie con un formato intero -->
-              <p>Distanza: {{ distance | number: '1.2-2' }} km</p> <!-- Mostra la distanza con due decimali -->
+              <p>Kcal bruciate: {{ calories | number: '1.0-0' }}</p>
+              <p>Distanza: {{ distance | number: '1.2-2' }} km</p>
             </div>
           </ng-container>
         </ion-card-content>
       </ion-card>
 
-      <!-- Se l'attività NON è avviata, mostra i pulsanti per avviarla -->
       <ion-card *ngIf="!isActivityStarted">
         <ion-card-header>
           <ion-card-title>Attività</ion-card-title>
@@ -73,7 +68,6 @@
         </ion-card-content>
       </ion-card>
 
-      <!-- Il pulsante "Ferma l'attività" appare solo se un'attività è avviata -->
       <ion-card *ngIf="isActivityStarted">
         <ion-card-content>
           <ion-button expand="block" color="danger" (click)="stopActivity()">
@@ -94,7 +88,6 @@
         </ion-item>
       </ion-list>
 
-      <!-- La mappa -->
       <ion-card>
         <ion-button (click)="activateGeofenceMode()">Aggiungi Geofence</ion-button>
         <ion-button color="danger" (click)="showGeofences()">
@@ -118,7 +111,6 @@
 
     </ion-content>
 
-    <!-- Barra di navigazione in basso -->
     <ion-footer>
       <ion-toolbar>
         <ion-tabs>

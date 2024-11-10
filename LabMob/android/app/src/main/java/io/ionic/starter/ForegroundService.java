@@ -44,13 +44,12 @@ public class ForegroundService extends Service implements SensorEventListener {
     }
 
 
-    // Imposta un handler per aggiornare le notifiche
     handler = new Handler();
     runnable = new Runnable() {
       @Override
       public void run() {
         sendNotification();
-        handler.postDelayed(this, 20000); // Aggiorna ogni 20 secondi
+        handler.postDelayed(this, 20000);
       }
     };
     handler.post(runnable);
@@ -69,7 +68,7 @@ public class ForegroundService extends Service implements SensorEventListener {
         .setContentIntent(pendingIntent)
         .build();
 
-      startForeground(1, notification); // Avvia il servizio in foreground con la notifica
+      startForeground(1, notification);
     }
   }
 
@@ -89,7 +88,7 @@ public class ForegroundService extends Service implements SensorEventListener {
   }
 
   public void stopNotification() {
-    handler.removeCallbacks(runnable); // Ferma il runnable
+    handler.removeCallbacks(runnable);
     stopForeground(true); // Ferma il servizio foreground
   }
 
@@ -97,13 +96,13 @@ public class ForegroundService extends Service implements SensorEventListener {
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
     if (intent != null && intent.getBooleanExtra("stopService", false)) {
-      stopSelf(); // Ferma il servizio se ricevuto un flag
-      return START_NOT_STICKY; // Non riavviare automaticamente il servizio
+      stopSelf();
+      return START_NOT_STICKY;
     }
 
     // Inizia a inviare notifiche solo quando il servizio è attivo
-    handler.post(runnable); // Avvia il runnable
-    return START_STICKY; // Assicura che il servizio rimanga attivo
+    handler.post(runnable);
+    return START_STICKY;
   }
 
 
@@ -133,6 +132,6 @@ public class ForegroundService extends Service implements SensorEventListener {
 
   @Override
   public void onAccuracyChanged(Sensor sensor, int accuracy) {
-    // Non necessario per ora
+
   }
 }

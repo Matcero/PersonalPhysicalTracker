@@ -12,10 +12,10 @@ import ChartDataLabels from 'chartjs-plugin-datalabels';
 })
 export class StatisticsPage implements OnInit {
   activities: any[] = [];
-  selectedUser: string = 'Utente'; // Valore di default
-  chart: Chart<'pie', number[], string> | null = null; // Imposta il tipo di chart
-  stepsKilometersChart: Chart<'line', number[], string> | null = null; // Grafico per passi e km
-  selectedMonth: number; // Mese selezionato
+  selectedUser: string = 'Utente';
+  chart: Chart<'pie', number[], string> | null = null; // Grafico a torta
+  stepsKilometersChart: Chart<'line', number[], string> | null = null; // Gragico linee
+  selectedMonth: number;
   months: string[] = [
     'Gennaio', 'Febbraio', 'Marzo', 'Aprile',
     'Maggio', 'Giugno', 'Luglio', 'Agosto',
@@ -23,7 +23,7 @@ export class StatisticsPage implements OnInit {
   ];
 
   isLoggedIn: boolean = false;
-  followedUsers: string[] = []; // Aggiunto per tenere traccia degli utenti seguiti
+  followedUsers: string[] = []; // Array Utenti seguiti
 
   constructor(
     private router: Router,
@@ -32,7 +32,7 @@ export class StatisticsPage implements OnInit {
   ) {
     Chart.register(...registerables, ChartDataLabels);
     const currentDate = new Date();
-    this.selectedMonth = currentDate.getMonth(); // Ottiene il mese corrente (0-11)
+    this.selectedMonth = currentDate.getMonth();
   }
 
   async ngOnInit() {
@@ -47,22 +47,22 @@ export class StatisticsPage implements OnInit {
     this.isLoggedIn = !!this.activityService.user; // Verifica se l'utente esiste
     if (this.isLoggedIn) {
       this.selectedUser = this.activityService.user.email; // Prendi l'email dell'utente
-      await this.loadFollowedUsers(); // Carica gli utenti seguiti
+      await this.loadFollowedUsers(); // Carica gli utenti seguiti dell'account loggato
     } else {
-      this.selectedUser = 'Utente'; // Valore di default
+      this.selectedUser = 'Utente';
     }
 
-    await this.loadActivitiesForCurrentUser(); // Carica le attività dal dispositivo
+    await this.loadActivitiesForCurrentUser(); // Carica le attività presenti nel dispositivo
     this.createChart(); // Crea il grafico per il mese selezionato
-    this.createStepsKilometersChart(); // Crea il grafico a linee per passi e km
+    this.createStepsKilometersChart();
   }
 
   async loadActivitiesForCurrentUser() {
     if (!this.activityService._storage) {
-      await this.activityService.init(); // Assicura che lo storage sia pronto
+      await this.activityService.init();
     }
 
-    this.activities = await this.activityService.getActivityHistory(); // Carica le attività memorizzate nel dispositivo
+    this.activities = await this.activityService.getActivityHistory();
     console.log("Attività caricate dal dispositivo:", this.activities);
   }
 
@@ -88,7 +88,7 @@ export class StatisticsPage implements OnInit {
         await this.loadSelectedUserActivities(); // Carica le attività del nuovo utente selezionato da Firebase
       }
       this.createChart(); // Crea nuovamente il grafico dopo aver caricato le attività
-      this.createStepsKilometersChart(); // Crea nuovamente il grafico a linee dopo aver caricato le attività
+      this.createStepsKilometersChart();
     }
   }
 
@@ -104,24 +104,22 @@ export class StatisticsPage implements OnInit {
 
   // Crea il grafico a torta
   createChart() {
-    const activityCount: { [key: string]: number } = {}; // Oggetto per contare le attività
+    const activityCount: { [key: string]: number } = {};
 
-    // Usa direttamente le attività dell'utente loggato
     const activitiesToUse = this.activities;
 
     activitiesToUse.forEach(activity => {
-      // Assicurati che startTime sia un oggetto Timestamp
       const activityDate = activity.startTime instanceof Date ? activity.startTime : activity.startTime.toDate();
-      console.log("Data attività:", activityDate, "Mese attività:", activityDate.getMonth()); // Log per verificare la data delle attività
+      console.log("Data attività:", activityDate, "Mese attività:", activityDate.getMonth());
 
       if (activityDate.getMonth() === this.selectedMonth) {
-        activityCount[activity.type] = (activityCount[activity.type] || 0) + 1; // Incrementa il conteggio per tipo di attività
+        activityCount[activity.type] = (activityCount[activity.type] || 0) + 1;
       }
     });
 
     const labels: string[] = Object.keys(activityCount);
     const data: number[] = Object.values(activityCount);
-    const total: number = data.reduce((sum: number, value: number) => sum + value, 0); // Assicurati che sum e value siano numeri
+    const total: number = data.reduce((sum: number, value: number) => sum + value, 0);
 
     this.chart?.destroy(); // Distruggi il grafico precedente se esiste
 
@@ -133,7 +131,7 @@ export class StatisticsPage implements OnInit {
           labels: labels,
           datasets: [{
             data: data,
-            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'], // Colori personalizzati
+            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
           }],
         },
         options: {
@@ -150,7 +148,7 @@ export class StatisticsPage implements OnInit {
               anchor: 'center',
               align: 'center',
               formatter: (value: number) => {
-                const percentage = total ? ((value / total) * 100).toFixed(1) + '%' : '0%'; // Gestisci il caso di totale 0
+                const percentage = total ? ((value / total) * 100).toFixed(1) + '%' : '0%';
                 return percentage;
               },
               color: '#fff',
@@ -159,8 +157,8 @@ export class StatisticsPage implements OnInit {
         }
       });
     } else {
-      console.warn("Nessun dato disponibile per il grafico."); // Messaggio di avviso se non ci sono dati
-      this.chart = null; // Opzionale: puoi resettare il grafico se non ci sono dati
+      console.warn("Nessun dato disponibile per il grafico.");
+      this.chart = null;
     }
   }
 
@@ -231,15 +229,15 @@ export class StatisticsPage implements OnInit {
            text: 'Passi e Distanza per il Mese Selezionato'
          },
          datalabels: {
-           align: 'top', // Posiziona l'etichetta in alto rispetto ai pallini
-           anchor: 'end', // Fissa l'ancoraggio
-           offset: 8, // Distanza in pixel dal pallino per evitare sovrapposizioni
-           color: '#fff', // Colore delle etichette
+           align: 'top',
+           anchor: 'end',
+           offset: 8,
+           color: '#fff',
            font: {
-             size: 10, // Dimensione del testo
+             size: 10,
              weight: 'bold'
            },
-           formatter: (value) => `${value}`, // Formatta l'etichetta per mostrare il valore
+           formatter: (value) => `${value}`,
          }
        },
        scales: {
@@ -277,8 +275,6 @@ export class StatisticsPage implements OnInit {
  }
 
 
-
-
   // Seleziona un mese
   selectMonth(monthIndex: number) {
     this.selectedMonth = monthIndex; // Aggiorna il mese selezionato
@@ -286,7 +282,6 @@ export class StatisticsPage implements OnInit {
     this.createStepsKilometersChart(); // Ricarica il grafico a linee
   }
 
-  // Navigazione
   goToHome() {
     this.router.navigate(['/home']);
   }

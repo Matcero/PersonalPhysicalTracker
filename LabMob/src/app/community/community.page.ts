@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { isPlatform } from '@ionic/angular';
 import { Device } from '@capacitor/device';
 import { AngularFirestore, AngularFirestoreDocument } from '@angular/fire/compat/firestore';
-import firebase from 'firebase/compat/app'; // Questo import serve per accedere a FieldValue
+import firebase from 'firebase/compat/app';
 import { FirestoreService } from '../services/firestore.service';
 import { ActivityService } from '../services/activity.service';
 import { AlertController } from '@ionic/angular';
@@ -13,7 +13,7 @@ import { AlertController } from '@ionic/angular';
 interface User {
   uid: string;
   email: string;
-  followers?: string[]; // Lista di follower
+  followers?: string[];
 }
 
 
@@ -35,58 +35,57 @@ export class CommunityPage implements OnInit {
   email: string = '';
   password: string = '';
 
-  // Inietta Firestore nel costruttore
   constructor(private alertController: AlertController, private afAuth: AngularFireAuth, private firestore: AngularFirestore, private router: Router, private firestoreService: FirestoreService, private activityService: ActivityService) {}
 
-async onUploadButtonClick() {
-  // Chiede conferma prima di eseguire l'upload
-  const alert = await this.alertController.create({
-    header: 'Conferma invio',
-    message: 'Sicuro di inviare le attività? Non si torna indietro',
-    buttons: [
-      {
-        text: 'No',
-        role: 'cancel',
-        handler: () => {
-          console.log('Upload annullato');
+  async onUploadButtonClick() {
+    // Popup di conferma
+    const alert = await this.alertController.create({
+      header: 'Conferma invio',
+      message: 'Sicuro di inviare le attività? Non si torna indietro',
+      buttons: [
+        {
+          text: 'No',
+          role: 'cancel',
+          handler: () => {
+            console.log('Upload annullato');
+          }
+        },
+        {
+          text: 'Sì',
+          handler: async () => {
+            this.uploadMessage = await this.firestoreService.uploadUserActivity();
+            console.log(this.uploadMessage);
+          }
         }
-      },
-      {
-        text: 'Sì',
-        handler: async () => {
-          this.uploadMessage = await this.firestoreService.uploadUserActivity();
-          console.log(this.uploadMessage);  // Stampa il messaggio di upload
-        }
-      }
-    ]
-  });
+      ]
+    });
 
-  await alert.present();
-}
+    await alert.present();
+  }
 
 
   ngOnInit() {
     this.afAuth.authState.subscribe((user) => {
           if (user) {
             this.user = user;
-            this.activityService.user = user; // Imposta l'utente in ActivityService
+            this.activityService.user = user;
             this.loginMessage = 'Login effettuato!';
             this.getUserList();
           } else {
             this.user = null;
-            this.activityService.user = null; // Rimuovi l'utente da ActivityService
+            this.activityService.user = null;
             this.loginMessage = 'Benvenuto nella sezione Community!';
           }
         });
       }
 
-displayUserListPage() {
-  if (this.user) {
-    this.showUserListPage = true;
-    this.showUserPage = false;
-    this.showUploadPage = false;
+  displayUserListPage() {
+    if (this.user) {
+      this.showUserListPage = true;
+      this.showUserPage = false;
+      this.showUploadPage = false;
+    }
   }
-}
 
 
   displayUserPage() {
@@ -95,11 +94,10 @@ displayUserListPage() {
       this.showUserListPage = false;
       this.showUploadPage = false;
 
-      // Recupera l'elenco dei follower con le loro email
+      // Recupera l'elenco dei follower
       this.firestore.collection<User>('users').doc(this.user.uid).get().subscribe(doc => {
         const data = doc.data() as User;
         if (data && data.followers) {
-          // Salva l'elenco di follower
           const followerIds = data.followers;
           this.user.followers = [];
 
@@ -108,7 +106,7 @@ displayUserListPage() {
             this.firestore.collection<User>('users').doc(followerId).get().subscribe(followerDoc => {
               const followerData = followerDoc.data() as User;
               if (followerData) {
-                this.user.followers.push(followerData.email); // Aggiungi l'email del follower all'elenco
+                this.user.followers.push(followerData.email);
               }
             });
           });
@@ -118,8 +116,6 @@ displayUserListPage() {
       });
     }
   }
-
-
 
   displayUploadPage() {
     if (this.user) {
@@ -149,7 +145,7 @@ displayUserListPage() {
       const userCredential = await this.afAuth.createUserWithEmailAndPassword(this.email, this.password);
       this.user = userCredential.user;
 
-      // Aggiungi l'utente alla collezione 'users' in Firestore
+      // Aggiungi l'utente in Firestore
       await this.firestore.collection('users').doc(this.user.uid).set({
         uid: this.user.uid,
         email: this.user.email,
@@ -167,21 +163,19 @@ displayUserListPage() {
     }
   }
 
-  // Funzione per il logout
+  // Il Logout
   async logout() {
     try {
       await this.afAuth.signOut();
       this.user = null;
 
-      // Reset delle variabili per nascondere tutte le pagine eccetto il login
       this.showUserPage = false;
       this.showUserListPage = false;
       this.showUploadPage = false;
 
-      // Aggiorna il messaggio di login e reindirizza alla schermata iniziale
       this.loginMessage = 'Benvenuto nella sezione Community! Esegui il login per continuare.';
 
-      // Naviga alla pagina della community (schermata di login)
+      // Naviga alla pagina della community
       this.router.navigate(['/community']);
 
       console.log('Logout effettuato');
@@ -242,7 +236,6 @@ displayUserListPage() {
         });
       }
 
-      // Aggiorna lo stato solo dopo il successo dell'operazione su Firestore
       user.isFollowing = !user.isFollowing;
 
     } catch (error) {
@@ -253,7 +246,7 @@ displayUserListPage() {
   // Funzione per rimuovere un follower dall'elenco
   async removeFollower(index: number) {
     try {
-      const followerIdToRemove = this.user.followers[index]; // Prendi l'ID o l'email del follower da rimuovere
+      const followerIdToRemove = this.user.followers[index];
 
       // Aggiorna Firestore per rimuovere il follower
       await this.firestore.collection('users').doc(this.user.uid).update({
@@ -270,7 +263,6 @@ displayUserListPage() {
   }
 
   onOrangeButtonClick() {
-    // Questa funzione attualmente non fa nulla
     console.log('Bottone arancione cliccato!');
   }
 

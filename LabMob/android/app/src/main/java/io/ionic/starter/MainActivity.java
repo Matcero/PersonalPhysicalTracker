@@ -36,7 +36,6 @@ public class MainActivity extends BridgeActivity {
   @Override
   public void onStart() {
     super.onStart();
-    // Interrompe il servizio quando l'app è in primo piano
     stopForegroundService();
     this.getBridge().triggerWindowJSEvent("appOnStart");
   }
