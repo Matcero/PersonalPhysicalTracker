@@ -183,7 +183,10 @@ handleAcceleration(event: AccelListenerEvent) {
     await this.activityService.deleteGeofence(index);
     this.geofences.splice(index, 1);
     console.log('Geofence rimosso');
+    this.ngOnInit();
   }
+
+
 
   // Metodo per monitorare il geofence
   async monitorGeofence() {
@@ -308,6 +311,8 @@ handleAcceleration(event: AccelListenerEvent) {
            this.geofenceModeActive = false;
          }
        });
+
+
 
       // Aggiorna la posizione del marker ogni 2 secondi in base ai movimenti dell'utente
        this.positionWatchInterval = setInterval(async () => {

@@ -1,5 +1,6 @@
 # LabMob
-cd LabMob
+cd ../labmob
+
 
 # Per far partire l'app web su android
 npm install @capacitor/core @capacitor/cli @capacitor/motion @capacitor/local-notifications
