@@ -29,11 +29,16 @@ repositories {
         dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
 		dirs '../../node_modules/@capacitor/background-runner/android/src/main/libs', 'libs'
     }
+  repositories {
+    google()
+    mavenCentral()  // Aggiungi questo repository se non è presente
+    jcenter()       // Se desideri, puoi anche includere JCenter
+  }
 }
 
 dependencies {
   implementation("androidx.compose:compose-bom:2023.10.01")
-  implementation("androidx.activity:activity-compose")
+  implementation 'androidx.activity:activity-compose:1.6.1' // Usa l'ultima versione disponibile
   implementation 'androidx.compose.foundation:foundation:1.0.5'
   implementation 'androidx.compose.material:material:1.0.5'
   implementation 'com.google.android.gms:play-services-location:21.3.0'
