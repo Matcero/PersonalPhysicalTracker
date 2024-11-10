@@ -41,6 +41,7 @@ export class HomePage implements OnInit {
   motionListener: any; // Aggiungi questa dichiarazione
   positionWatchInterval: any;
   marker: any;
+
   constructor(
     private activityService: ActivityService,
     private router: Router,
@@ -104,32 +105,61 @@ export class HomePage implements OnInit {
     });
   }
 
-   handleAcceleration(event: AccelListenerEvent) {
-       if (this.isActivityStarted && this.currentActivity.type === 'walking' || this.currentActivity.type === 'sport') {
-         const threshold = 3.0; // Adjust this value based on testing
+  shouldIncrementSteps(deltaX: number, deltaY: number, deltaZ: number, threshold: number): boolean {
+    // Definisce un intervallo ragionevole per la variabilità dei movimenti
+    const maxVariation = threshold * 1.2;  // Fattore di tolleranza per ridurre la sensibilità
+    const minVariation = threshold * 0.5;  // Fattore per ignorare movimenti troppo piccoli
 
-         if (this.lastAcceleration && (
-             Math.abs(event.acceleration.x - this.lastAcceleration.x) > threshold ||
-             Math.abs(event.acceleration.y - this.lastAcceleration.y) > threshold ||
-             Math.abs(event.acceleration.z - this.lastAcceleration.z) > threshold)) {
-             // Incrementa i passi e calcola calorie e distanza
-                       this.steps++;
-                         this.distance = this.steps * this.stepLength;
-                         this.calories = this.calculateCalories(this.steps);
+    // Controlla che le variazioni siano entro l'intervallo ragionevole per rappresentare un passo
+    const isStepLikeMovement =
+      (deltaX >= minVariation && deltaX <= maxVariation) &&
+      (deltaY >= minVariation && deltaY <= maxVariation) &&
+      (deltaZ >= minVariation && deltaZ <= maxVariation);
 
-                          this.ngZone.run(() => {
-                                this.cdr.detectChanges(); // Forza l'aggiornamento anche in background
-                              });
-             }
-         // Update lastAcceleration
-         this.lastAcceleration = { x: event.acceleration.x, y: event.acceleration.y, z: event.acceleration.z }; // Use acceleration properties
-       }
-     }
+    return isStepLikeMovement;
+  }
+
+
+handleAcceleration(event: AccelListenerEvent) {
+  if (this.isActivityStarted && (this.currentActivity.type === 'walking' || this.currentActivity.type === 'sport')) {
+    const walkingThreshold = 5.0;
+    const sportThreshold = 3.0;
+    const threshold = this.currentActivity.type === 'walking' ? walkingThreshold : sportThreshold;
+
+    if (this.lastAcceleration) {
+      const deltaX = Math.abs(event.acceleration.x - this.lastAcceleration.x);
+      const deltaY = Math.abs(event.acceleration.y - this.lastAcceleration.y);
+      const deltaZ = Math.abs(event.acceleration.z - this.lastAcceleration.z);
+
+      // Usa il metodo personalizzato per verificare se i cambiamenti rappresentano un passo
+      if (this.shouldIncrementSteps(deltaX, deltaY, deltaZ, threshold)) {
+        this.steps++;
+        this.distance = this.steps * this.stepLength;
+        this.calories = this.calculateCalories(this.steps);
+
+        // Aggiorna l'interfaccia anche in background
+        this.ngZone.run(() => {
+          this.cdr.detectChanges();
+        });
+      }
+    }
+
+    // Aggiorna lastAcceleration solo se il movimento è superiore alla soglia
+    this.lastAcceleration = {
+      x: event.acceleration.x,
+      y: event.acceleration.y,
+      z: event.acceleration.z
+    };
+  }
+}
+
+
 
   setupPlatformListeners() {
       this.platform.pause.subscribe(() => this.onAppBackground());
       this.platform.resume.subscribe(() => this.onAppForeground());
     }
+
     async onAppBackground() {
         if (this.isActivityStarted) {
         this.startForegroundService();
