@@ -126,34 +126,27 @@ export class HomePage implements OnInit {
 
 handleAcceleration(event: AccelListenerEvent) {
   if (this.isActivityStarted && (this.currentActivity.type === 'walking' || this.currentActivity.type === 'sport')) {
-    const walkingThreshold = 5.0;
+    const walkingThreshold = 4.0;
     const sportThreshold = 3.0;
     const threshold = this.currentActivity.type === 'walking' ? walkingThreshold : sportThreshold;
 
-    if (this.lastAcceleration) {
-      const deltaX = Math.abs(event.acceleration.x - this.lastAcceleration.x);
-      const deltaY = Math.abs(event.acceleration.y - this.lastAcceleration.y);
-      const deltaZ = Math.abs(event.acceleration.z - this.lastAcceleration.z);
+    if (this.lastAcceleration && (
+                Math.abs(event.acceleration.x - this.lastAcceleration.x) > threshold ||
+                Math.abs(event.acceleration.y - this.lastAcceleration.y) > threshold ||
+                Math.abs(event.acceleration.z - this.lastAcceleration.z) > threshold)) {
+                // Incrementa i passi e calcola calorie e distanza
+                          this.steps++;
+                            this.distance = this.steps * this.stepLength;
+                            this.calories = this.calculateCalories(this.steps);
 
-      if (this.shouldIncrementSteps(deltaX, deltaY, deltaZ, threshold)) {
-        this.steps++;
-        this.distance = this.steps * this.stepLength;
-        this.calories = this.calculateCalories(this.steps);
-
-        this.ngZone.run(() => {
-          this.cdr.detectChanges();
-        });
-      }
-    }
-
-    // Aggiorna lastAcceleration solo se il movimento è superiore alla soglia
-    this.lastAcceleration = {
-      x: event.acceleration.x,
-      y: event.acceleration.y,
-      z: event.acceleration.z
-    };
-  }
-}
+                             this.ngZone.run(() => {
+                                   this.cdr.detectChanges(); // Forza l'aggiornamento anche in background
+                                 });
+                }
+            // Update lastAcceleration
+            this.lastAcceleration = { x: event.acceleration.x, y: event.acceleration.y, z: event.acceleration.z }; // Use acceleration properties
+          }
+        }
 
 
   setupPlatformListeners() {
