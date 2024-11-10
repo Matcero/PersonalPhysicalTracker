@@ -323,18 +323,11 @@ handleAcceleration(event: AccelListenerEvent) {
              coordinate: { lat: newLat, lng: newLng },
              zoom: 15,
            });
-
            console.log(`Posizione aggiornata: ${newLat}, ${newLng}`);
          } catch (error) {
            console.error('Errore nel recupero della posizione durante l’aggiornamento', error);
          }
        }, 20000);
-
-
-       // Ferma l'intervallo quando la pagina va in background
-       this.platform.pause.subscribe(() => {
-         clearInterval(this.positionWatchInterval);
-       });
      }
 
   // Avvia un'attività
