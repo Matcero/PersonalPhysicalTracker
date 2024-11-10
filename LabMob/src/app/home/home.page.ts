@@ -135,7 +135,7 @@ handleAcceleration(event: AccelListenerEvent) {
                 Math.abs(event.acceleration.y - this.lastAcceleration.y) > threshold ||
                 Math.abs(event.acceleration.z - this.lastAcceleration.z) > threshold)) {
                 // Incrementa i passi e calcola calorie e distanza
-                          this.steps++;
+                           this.steps++;
                             this.distance = this.steps * this.stepLength;
                             this.calories = this.calculateCalories(this.steps);
 
