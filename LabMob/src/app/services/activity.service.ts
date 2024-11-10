@@ -97,14 +97,14 @@ export class ActivityService {
    return [];
  }
 
-// Rimuove un geofence dal dispositivo locale per ID
-async deleteGeofence(id: number) {
+async deleteGeofence(index: number) {
   if (this._storage) {
     let geofences = await this._storage.get('geofences') || [];
-    // Rimuove il geofence con l'ID specificato
-    geofences = geofences.filter(geofence => geofence.id !== id);
-    await this._storage.set('geofences', geofences);
-    console.log(`Geofence con ID ${id} rimosso.`);
+    if (index >= 0 && index < geofences.length) {
+      geofences.splice(index, 1); // Rimuove il geofence dall'array
+      await this._storage.set('geofences', geofences); // Salva l'array aggiornato
+      console.log('Geofence rimosso:', index);
+    }
   }
 }
 
