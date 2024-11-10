@@ -80,22 +80,33 @@ export class ActivityService {
   async saveGeofence(geofence: {lat: number, lng: number, radius: number}) {
     if (this._storage) {
       let geofences = (await this._storage.get('geofences')) || [];
-      geofences.push(geofence);
+      const newId = geofences.length > 0 ? geofences[geofences.length - 1].id + 1 : 1;
+       geofences.push({ id: newId, ...geofence });
       await this._storage.set('geofences', geofences);
       console.log('Geofence salvato:', geofence);
     }
   }
 
-  // Carica i geofence salvati
-  async loadGeofences(): Promise<{lat: number, lng: number, radius: number}[]> {
-    if (this._storage) {
-      const geofences = await this._storage.get('geofences') || [];
-      console.log('Geofences caricati:', geofences);
-      return geofences;
-    }
-    return [];
-  }
+ // Carica i geofence salvati con ID
+ async loadGeofences(): Promise<{id: number, lat: number, lng: number, radius: number}[]> {
+   if (this._storage) {
+     const geofences = await this._storage.get('geofences') || [];
+     console.log('Geofences caricati:', geofences);
+     return geofences;
+   }
+   return [];
+ }
 
+// Rimuove un geofence dal dispositivo locale per ID
+async deleteGeofence(id: number) {
+  if (this._storage) {
+    let geofences = await this._storage.get('geofences') || [];
+    // Rimuove il geofence con l'ID specificato
+    geofences = geofences.filter(geofence => geofence.id !== id);
+    await this._storage.set('geofences', geofences);
+    console.log(`Geofence con ID ${id} rimosso.`);
+  }
+}
 
   // Avvia un'attività
   async startActivity(activityType: string) {

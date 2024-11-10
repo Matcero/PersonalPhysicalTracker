@@ -23,7 +23,7 @@ export class HomePage implements OnInit {
   geofenceModeActive: boolean = false;
     geofenceCenter: { lat: number, lng: number } | null = null;
     geofenceRadius: number = 100; // Raggio predefinito di 100 metri
-
+  geofences: { lat: number, lng: number, radius: number }[] = [];
   isPeriodicNotificationEnabled: boolean = false;
   activityHistory: any[] = [];
   intervalId: any;
@@ -39,7 +39,8 @@ export class HomePage implements OnInit {
   weight: number = 70; // User's weight in kg (adjust this value)
   lastAcceleration: { x: number, y: number, z: number } | null = { x: 0, y: 0, z: 0 };
   motionListener: any; // Aggiungi questa dichiarazione
-
+  positionWatchInterval: any;
+  marker: any;
   constructor(
     private activityService: ActivityService,
     private router: Router,
@@ -50,7 +51,6 @@ export class HomePage implements OnInit {
 
   ) {
     }
-
 
   async ngOnInit() {
     //this.monitorGeofence();
@@ -130,14 +130,36 @@ export class HomePage implements OnInit {
       this.platform.pause.subscribe(() => this.onAppBackground());
       this.platform.resume.subscribe(() => this.onAppForeground());
     }
+    async onAppBackground() {
+        if (this.isActivityStarted) {
+        this.startForegroundService();
+        }
+      }
 
-  // Metodo per monitorare il geofence
+    async onAppForeground() {
+          await this.stopForegroundService();
+      console.log("App in primo piano, cancello la notifica persistente.");
+      await LocalNotifications.cancel({ notifications: [{ id: 1 }] });
+    }
+
+ // Metodo per caricare e mostrare i geofence salvati
+  async showGeofences() {
+    this.geofences = await this.activityService.loadGeofences();
+    console.log('Geofences caricati:', this.geofences);
+  }
+
+  // Metodo per rimuovere un geofence
+  async removeGeofence(index: number) {
+    await this.activityService.deleteGeofence(index);
+    this.geofences.splice(index, 1);
+    console.log('Geofence rimosso');
+  }
+
   // Metodo per monitorare il geofence
   async monitorGeofence() {
     try {
       const position = await Geolocation.getCurrentPosition();
       const geofences = await this.activityService.loadGeofences(); // Carica tutti i geofence salvati
-
       // Controlla per ogni geofence se l'utente è dentro o fuori
       for (const geofence of geofences) {
         const distance = this.calculateDistance(
@@ -146,7 +168,6 @@ export class HomePage implements OnInit {
           position.coords.latitude,
           position.coords.longitude
         );
-
         // Se la distanza è inferiore al raggio del geofence, l'utente è dentro
         if (distance <= geofence.radius) {
           console.log(`L'utente è all'interno del geofence con centro a (${geofence.lat}, ${geofence.lng}).`);
@@ -155,7 +176,7 @@ export class HomePage implements OnInit {
             notifications: [{
               id: 2,
               title: "Sei dentro ad un geofence",
-              body: `Sei entrato nell'area protetta con centro a (${geofence.lat}, ${geofence.lng}).`,
+              body: `Sei entrato nell'area con centro a (${geofence.lat}, ${geofence.lng}).`,
               ongoing: false,
               autoCancel: true,
             }]
@@ -163,17 +184,6 @@ export class HomePage implements OnInit {
 
         } else {
           console.log(`L'utente è all'esterno del geofence con centro a (${geofence.lat}, ${geofence.lng}).`);
-
-          // Invia una notifica che l'utente è uscito dal geofence
-          /*await LocalNotifications.schedule({
-            notifications: [{
-              id: 3,
-              title: "Sei fuori dal geofence",
-              body: `Hai lasciato l'area protetta con centro a (${geofence.lat}, ${geofence.lng}).`,
-              ongoing: false,
-              autoCancel: true,
-            }]
-          });*/
         }
       }
 
@@ -181,8 +191,6 @@ export class HomePage implements OnInit {
       console.error("Errore nel recupero della posizione", error);
     }
   }
-
-
 
   // Funzione di utilità per calcolare la distanza tra due punti geografici
   calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -196,8 +204,6 @@ export class HomePage implements OnInit {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return earthRadius * c;
   }
-
-
 
  activateGeofenceMode() {
    this.geofenceModeActive = true;
@@ -229,7 +235,7 @@ export class HomePage implements OnInit {
        });
 
        // Aggiungi un marker per la posizione attuale
-       await map.addMarker({
+       this.marker = await map.addMarker({
          coordinate: { lat: currentLat, lng: currentLng },
          title: 'La mia posizione',
        });
@@ -247,7 +253,6 @@ export class HomePage implements OnInit {
            fillOpacity: 0.3,
          }]);
        }
-
        console.log('Geofences caricati sulla mappa:', geofences);
 
        // Aggiungi la logica per aggiungere un nuovo geofence
@@ -268,32 +273,38 @@ export class HomePage implements OnInit {
 
            // Salva il geofence in locale usando il servizio ActivityService
            await this.activityService.saveGeofence({ lat: this.geofenceCenter.lat, lng: this.geofenceCenter.lng, radius: this.geofenceRadius });
-
            console.log('Nuovo geofence aggiunto alle coordinate:', this.geofenceCenter);
-
            // Disattiva la modalità geofence
            this.geofenceModeActive = false;
          }
        });
+
+      // Aggiorna la posizione del marker ogni 2 secondi in base ai movimenti dell'utente
+       this.positionWatchInterval = setInterval(async () => {
+         try {
+           // Ottieni la nuova posizione
+           const updatedPosition = await Geolocation.getCurrentPosition();
+           const newLat = updatedPosition.coords.latitude;
+           const newLng = updatedPosition.coords.longitude;
+
+           // Aggiorna la posizione della mappa e del marker
+           await map.setCamera({
+             coordinate: { lat: newLat, lng: newLng },
+             zoom: 15,
+           });
+           await this.marker.setPosition({ lat: newLat, lng: newLng });
+
+           console.log(`Posizione aggiornata: ${newLat}, ${newLng}`);
+         } catch (error) {
+           console.error('Errore nel recupero della posizione durante l’aggiornamento', error);
+         }
+       }, 20000); // Aggiorna ogni 2 secondi
+
+       // Ferma l'intervallo quando la pagina va in background
+       this.platform.pause.subscribe(() => {
+         clearInterval(this.positionWatchInterval);
+       });
      }
-
-
-
-
-
-
-
-  async onAppBackground() {
-      if (this.isActivityStarted) {
-      this.startForegroundService();
-      }
-    }
-
-  async onAppForeground() {
-        await this.stopForegroundService();
-    console.log("App in primo piano, cancello la notifica persistente.");
-    await LocalNotifications.cancel({ notifications: [{ id: 1 }] });
-  }
 
   // Avvia un'attività e richiede la geolocalizzazione
   async startActivity(activityType: string) {

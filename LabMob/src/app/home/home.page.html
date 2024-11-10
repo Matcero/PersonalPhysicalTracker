@@ -16,16 +16,6 @@
 
     <ion-content [fullscreen]="true">
 
-      <!--<ion-button (click)="addItem()">Aggiungi un oggetto a Firestore</ion-button>
-      <ion-button (click)="getItems()">Mostra oggetti da Firestore</ion-button>
-
-      <ion-list>
-        <ion-item *ngFor="let item of items">
-          {{ item.name }} - {{ item.created.toDate() | date: 'short' }}
-        </ion-item>
-      </ion-list>-->
-
-
       <!-- Se un'attività è avviata, mostra il riquadro -->
       <ion-card *ngIf="isActivityStarted">
         <ion-card-header>
@@ -111,6 +101,21 @@
       <div style=" background: transparent; width: 100%; height: 300px;">
         <div id="map" style="width: 100%; height: 90%;"></div>
       </div>
+
+      <ion-card>
+        <button (click)="showGeofences()">Mostra Geofence</button>
+      </ion-card>
+
+      <!-- Elenco dei geofence salvati -->
+      <ion-list *ngIf="geofences && geofences.length > 0">
+        <ion-item *ngFor="let geofence of geofences; let i = index">
+          <ion-label>
+            Geofence: Lat: {{ geofence.lat }}, Lng: {{ geofence.lng }}, Raggio: {{ geofence.radius }}m
+          </ion-label>
+          <ion-button color="danger" (click)="removeGeofence(i)">Rimuovi</ion-button>
+        </ion-item>
+      </ion-list>
+
     </ion-content>
     <!-- Barra di navigazione in basso -->
     <ion-footer>
