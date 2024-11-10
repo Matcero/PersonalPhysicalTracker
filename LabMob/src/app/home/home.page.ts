@@ -321,23 +321,22 @@ handleAcceleration(event: AccelListenerEvent) {
       // Aggiorna la posizione del marker in base ai movimenti dell'utente
        this.positionWatchInterval = setInterval(async () => {
          try {
-           // Ottieni la nuova posizione
            const updatedPosition = await Geolocation.getCurrentPosition();
            const newLat = updatedPosition.coords.latitude;
            const newLng = updatedPosition.coords.longitude;
 
-           // Aggiorna la posizione della mappa e del marker
+           // Aggiorna solo la posizione della mappa
            await map.setCamera({
              coordinate: { lat: newLat, lng: newLng },
              zoom: 15,
            });
-           await this.marker.setPosition({ lat: newLat, lng: newLng });
 
            console.log(`Posizione aggiornata: ${newLat}, ${newLng}`);
          } catch (error) {
            console.error('Errore nel recupero della posizione durante l’aggiornamento', error);
          }
        }, 20000);
+
 
        // Ferma l'intervallo quando la pagina va in background
        this.platform.pause.subscribe(() => {
