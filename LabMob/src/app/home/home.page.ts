@@ -65,6 +65,11 @@ export class HomePage implements OnInit {
        console.log("Foreground service interrotto a causa dell'evento appOnStart.");
      });
 
+   App['addListener']('appOnStart', async () => {
+          await this.loadMap();
+
+        });
+
    App['addListener']('appOnStop', async () => {
           await this.monitorGeofence();
           console.log("geofence control");
