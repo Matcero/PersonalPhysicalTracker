@@ -20,6 +20,7 @@ import { NgZone } from '@angular/core';
   styleUrls: ['./home.page.scss'],
 })
 export class HomePage implements OnInit {
+   isGeofenceListVisible: boolean = false;
   geofenceModeActive: boolean = false;
     geofenceCenter: { lat: number, lng: number } | null = null;
     geofenceRadius: number = 100; // Raggio predefinito di 100 metri
@@ -172,11 +173,16 @@ handleAcceleration(event: AccelListenerEvent) {
       await LocalNotifications.cancel({ notifications: [{ id: 1 }] });
     }
 
- // Metodo per caricare e mostrare i geofence salvati
-  async showGeofences() {
-    this.geofences = await this.activityService.loadGeofences();
-    console.log('Geofences caricati:', this.geofences);
-  }
+ async showGeofences() {
+   this.isGeofenceListVisible = !this.isGeofenceListVisible;
+
+   // Carica i geofence solo se la lista deve essere mostrata
+   if (this.isGeofenceListVisible) {
+     this.geofences = await this.activityService.loadGeofences();
+     console.log('Geofences caricati:', this.geofences);
+   }
+ }
+
 
   // Metodo per rimuovere un geofence
   async removeGeofence(index: number) {
@@ -302,7 +308,7 @@ handleAcceleration(event: AccelListenerEvent) {
              strokeColor: '#00FF00',
              fillColor: '#00FF00',
              fillOpacity: 0.3,
-           }]);
+          }]);
 
            // Salva il geofence in locale usando il servizio ActivityService
            await this.activityService.saveGeofence({ lat: this.geofenceCenter.lat, lng: this.geofenceCenter.lng, radius: this.geofenceRadius });
